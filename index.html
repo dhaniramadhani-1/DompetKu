@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dompetku - Pengelola Keuangan Modern</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- LAYER LOGIN LOCKSCREEN -->
+  <div id="login-screen" class="login-overlay">
+    <div class="lockscreen-card">
+      <div class="brand-badge">💰 Dompetku</div>
+      <h2 id="login-title">Selamat Datang</h2>
+      <p id="login-subtitle">Masukkan PIN keamanan Anda</p>
+
+      <!-- Indikator 6 Titik PIN -->
+      <div id="pin-dots" class="pin-dots-container">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+
+      <!-- Keypad Angka Visual -->
+      <div class="keypad-grid">
+        <button class="key-btn" onclick="pressKey('1')">1</button>
+        <button class="key-btn" onclick="pressKey('2')">2</button>
+        <button class="key-btn" onclick="pressKey('3')">3</button>
+        <button class="key-btn" onclick="pressKey('4')">4</button>
+        <button class="key-btn" onclick="pressKey('5')">5</button>
+        <button class="key-btn" onclick="pressKey('6')">6</button>
+        <button class="key-btn" onclick="pressKey('7')">7</button>
+        <button class="key-btn" onclick="pressKey('8')">8</button>
+        <button class="key-btn" onclick="pressKey('9')">9</button>
+        <button class="key-btn action" onclick="clearKey()"><small>Hapus</small></button>
+        <button class="key-btn" onclick="pressKey('0')">0</button>
+        <button class="key-btn action primary" onclick="submitPIN()">✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HALAMAN UTAMA APLIKASI MODERN -->
+  <div id="app-screen" class="app-container hidden">
+    <!-- Header App -->
+    <header class="app-header">
+      <div class="user-profile">
+        <div class="avatar">💎</div>
+        <div>
+          <span class="greeting">Halo, Pengguna</span>
+          <h1 class="brand-title">Dompetku Dashboard</h1>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button onclick="eksporKeCSV()" class="btn-icon" title="Ekspor Laporan">📊 <span>Laporan</span></button>
+        <button onclick="lockApp()" class="btn-icon danger" title="Kunci Aplikasi">🔒</button>
+      </div>
+    </header>
+
+    <!-- Total Balance Highlight Card -->
+    <section class="main-balance-card">
+      <div class="balance-info">
+        <p class="balance-label">Total Saldo Bersih</p>
+        <h2 id="sisa-saldo" class="balance-amount">Rp 0</h2>
+      </div>
+      <div class="balance-badge">Aktif</div>
+    </section>
+
+    <!-- Ringkasan Keuangan Grid -->
+    <section class="summary-cards">
+      <div class="card-stat income">
+        <div class="stat-icon">⬇️</div>
+        <div class="stat-details">
+          <p>Pemasukan</p>
+          <h3 id="total-masuk">Rp 0</h3>
+        </div>
+      </div>
+      <div class="card-stat expense">
+        <div class="stat-icon">⬆️</div>
+        <div class="stat-details">
+          <p>Pengeluaran</p>
+          <h3 id="total-keluar">Rp 0</h3>
+        </div>
+      </div>
+    </section>
+
+    <!-- Form Tambah Transaksi -->
+    <section class="content-box">
+      <div class="box-header">
+        <h3>✨ Tambah Transaksi Baru</h3>
+      </div>
+      <form id="form-transaksi" class="form-grid">
+        <div class="input-field full">
+          <label>Deskripsi Transaksi</label>
+          <input type="text" id="deskripsi" placeholder="Contoh: Beli Kopi & Camilan" required>
+        </div>
+        <div class="input-field">
+          <label>Nominal (Rp)</label>
+          <input type="number" id="nominal" placeholder="0" min="1" required>
+        </div>
+        <div class="input-field">
+          <label>Jenis</label>
+          <select id="tipe">
+            <option value="keluar">🔴 Pengeluaran</option>
+            <option value="masuk">🟢 Pemasukan</option>
+          </select>
+        </div>
+        <div class="input-field full">
+          <label>Kategori</label>
+          <select id="kategori"></select>
+        </div>
+        <button type="submit" class="btn-primary-gradient">Simpan Catatan</button>
+      </form>
+    </section>
+
+    <!-- Riwayat Transaksi dengan Filter & Search -->
+    <section class="content-box">
+      <div class="box-header between">
+        <h3>📜 Riwayat Transaksi</h3>
+        <span id="transaction-count" class="badge-count">0 Transaksi</span>
+      </div>
+
+      <!-- Controls: Filter & Search -->
+      <div class="filter-bar">
+        <input type="text" id="search-input" onkeyup="filterTransactions()" placeholder="🔍 Cari transaksi...">
+        <div class="filter-chips">
+          <button class="chip active" onclick="setFilter('all', this)">Semua</button>
+          <button class="chip" onclick="setFilter('masuk', this)">Masuk</button>
+          <button class="chip" onclick="setFilter('keluar', this)">Keluar</button>
+        </div>
+      </div>
+
+      <ul id="daftar-transaksi" class="modern-history-list"></ul>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
