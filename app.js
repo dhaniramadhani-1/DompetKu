@@ -227,3 +227,12 @@ function eksporKeCSV() {
 selectTipe.addEventListener('change', updateKategoriOptions);
 updateKategoriOptions();
 updateUI();
+
+// --- REGISTRASI SERVICE WORKER UNTUK AKSES OFFLINE ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('Service Worker terdaftar untuk offline mode:', reg))
+      .catch(err => console.error('Gagal mendaftarkan Service Worker:', err));
+  });
+}
