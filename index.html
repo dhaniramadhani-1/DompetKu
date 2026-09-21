@@ -3,176 +3,140 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DompetKu Pro - Pengelola Keuangan Cerdas</title>
+  <title>Dompetku - Pengelola Keuangan Modern</title>
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f172a">
-  <!-- Firebase SDK Compat -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-  <!-- LOCKSCREEN LAYAR PENUH (TAMPILAN AWAL SEPERTI SEMULA) -->
-  <div id="login-overlay" class="login-overlay">
+  <!-- LAYER LOGIN LOCKSCREEN -->
+  <div id="login-screen" class="login-overlay">
     <div class="lockscreen-card">
-      <div class="brand-badge">💎 DompetKu Pro</div>
-      <h2>Masukkan PIN Akses</h2>
-      <p>Amankan data finansial Anda dengan PIN rahasia 4-6 angka.</p>
-      
-      <div class="pin-input-group">
-        <input 
-          type="password" 
-          id="local-password" 
-          inputmode="numeric" 
-          pattern="[0-9]*" 
-          maxlength="6" 
-          placeholder="• • • • • •"
-          oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+      <div class="brand-badge">💰 Dompetku</div>
+      <h2 id="login-title">Selamat Datang</h2>
+      <p id="login-subtitle">Masukkan PIN keamanan Anda</p>
+
+      <!-- Indikator 6 Titik PIN -->
+      <div id="pin-dots" class="pin-dots-container">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
       </div>
 
-      <button id="btn-local-login" class="btn-primary-gradient full">🔓 Buka Brankas Keuangan</button>
-      
-      <div class="divider"><span>Atau</span></div>
-
-      <button id="btn-google-login" class="btn-google">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-        <span>Masuk dengan Google</span>
-      </button>
-      
-      <p class="sync-info">Data tersimpan aman di Cloud Google</p>
+      <!-- Keypad Angka Visual -->
+      <div class="keypad-grid">
+        <button class="key-btn" onclick="pressKey('1')">1</button>
+        <button class="key-btn" onclick="pressKey('2')">2</button>
+        <button class="key-btn" onclick="pressKey('3')">3</button>
+        <button class="key-btn" onclick="pressKey('4')">4</button>
+        <button class="key-btn" onclick="pressKey('5')">5</button>
+        <button class="key-btn" onclick="pressKey('6')">6</button>
+        <button class="key-btn" onclick="pressKey('7')">7</button>
+        <button class="key-btn" onclick="pressKey('8')">8</button>
+        <button class="key-btn" onclick="pressKey('9')">9</button>
+        <button class="key-btn action" onclick="clearKey()"><small>Hapus</small></button>
+        <button class="key-btn" onclick="pressKey('0')">0</button>
+        <button class="key-btn action primary" onclick="submitPIN()">✓</button>
+      </div>
     </div>
   </div>
 
-  <!-- CONTAINER DASHBOARD UTAMA -->
-  <div id="main-dashboard" class="app-container hidden">
-    
-    <!-- HEADER APLIKASI -->
+  <!-- HALAMAN UTAMA APLIKASI MODERN -->
+  <div id="app-screen" class="app-container hidden">
+    <!-- Header App -->
     <header class="app-header">
       <div class="user-profile">
-        <img id="user-avatar" src="https://ui-avatars.com/api/?name=User&background=3b82f6&color=fff" alt="Avatar" class="avatar-img" />
+        <div class="avatar">💎</div>
         <div>
-          <p class="greeting">Selamat Datang 👋</p>
-          <h2 id="user-name" class="brand-title">Pengguna Dompetku</h2>
+          <span class="greeting">Halo, Pengguna</span>
+          <h1 class="brand-title">Dompetku Dashboard</h1>
         </div>
       </div>
-      
       <div class="header-actions">
-        <select id="currency-select" class="select-sm currency-picker">
-          <option value="IDR|Rp ">🇮🇩 IDR (Rp)</option>
-          <option value="USD|$">🇺🇸 USD ($)</option>
-          <option value="EUR|€">🇪🇺 EUR (€)</option>
-          <option value="JPY|¥">🇯🇵 JPY (¥)</option>
-          <option value="MYR|RM">🇲🇾 MYR (RM)</option>
-          <option value="SGD|S$">🇸🇬 SGD (S$)</option>
-          <option value="SAR|SR">🇸🇦 SAR (SR)</option>
-        </select>
-
-        <button id="theme-toggle" class="btn-icon" title="Ubah Mode Tampilan">🌙</button>
+        <button onclick="eksporKeCSV()" class="btn-icon" title="Ekspor Laporan">📊 <span>Laporan</span></button>
+        <button onclick="lockApp()" class="btn-icon danger" title="Kunci Aplikasi">🔒</button>
       </div>
     </header>
 
-    <!-- TOOLBAR SINKRONISASI -->
-    <div class="content-box-sm margin-top-sm">
-      <div class="backup-bar">
-        <span id="cloud-status-badge">⚡ Penyimpanan: Lokal Browser</span>
-        <button id="btn-export-pdf" class="btn-xs success">📄 Cetak PDF</button>
+    <!-- Total Balance Highlight Card -->
+    <section class="main-balance-card">
+      <div class="balance-info">
+        <p class="balance-label">Total Saldo Bersih</p>
+        <h2 id="sisa-saldo" class="balance-amount">Rp 0</h2>
       </div>
-    </div>
+      <div class="balance-badge">Aktif</div>
+    </section>
 
-    <!-- KARTU TOTAL ASET UTAMA -->
-    <div class="main-balance-card margin-top-md">
-      <div>
-        <p class="balance-label">💼 Total Assets & Saldo</p>
-        <h1 id="total-balance" class="balance-amount">Rp 0</h1>
-      </div>
-      <span class="balance-badge">🛡️ Terlindungi</span>
-    </div>
-
-    <!-- DOMPET & KANTUNG SAYA -->
-    <div class="content-box margin-top-md">
-      <div class="box-header between">
-        <h3>👛 Kantung & Sumber Dana</h3>
-        <button id="btn-add-wallet" class="btn-text">+ Tambah Kantung</button>
-      </div>
-      <div id="wallet-grid" class="wallet-grid"></div>
-    </div>
-
-    <!-- RINGKASAN PEMASUKAN & PENGELUARAN -->
-    <div class="summary-cards margin-top-md">
+    <!-- Ringkasan Keuangan Grid -->
+    <section class="summary-cards">
       <div class="card-stat income">
-        <div class="stat-icon">📈</div>
+        <div class="stat-icon">⬇️</div>
         <div class="stat-details">
-          <p>Pemasukan Bulan Ini</p>
-          <h3 id="total-income">Rp 0</h3>
+          <p>Pemasukan</p>
+          <h3 id="total-masuk">Rp 0</h3>
         </div>
       </div>
       <div class="card-stat expense">
-        <div class="stat-icon">📉</div>
+        <div class="stat-icon">⬆️</div>
         <div class="stat-details">
-          <p>Pengeluaran Bulan Ini</p>
-          <h3 id="total-expense">Rp 0</h3>
+          <p>Pengeluaran</p>
+          <h3 id="total-keluar">Rp 0</h3>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- FORM CATAT TRANSAKSI BARU -->
-    <div class="content-box margin-top-md">
+    <!-- Form Tambah Transaksi -->
+    <section class="content-box">
       <div class="box-header">
-        <h3>➕ Catat Transaksi Baru</h3>
+        <h3>✨ Tambah Transaksi Baru</h3>
       </div>
-      <form id="transaction-form" class="form-grid margin-top-sm">
-        <div class="input-field">
-          <label>Jenis Transaksi</label>
-          <select id="tx-type">
-            <option value="expense">🔴 Pengeluaran</option>
-            <option value="income">🟢 Pemasukan</option>
-          </select>
-        </div>
-
-        <div class="input-field">
-          <label>Kategori</label>
-          <select id="tx-category">
-            <option value="Makanan">🍔 Makanan & Minuman</option>
-            <option value="Belanja">🛍️ Belanja</option>
-            <option value="Gaji">💰 Gaji / Revenue</option>
-            <option value="Transport">🚗 Transportasi</option>
-            <option value="Tagihan">🧾 Tagihan & Utilitas</option>
-          </select>
-        </div>
-
-        <div class="input-field">
-          <label>Nominal</label>
-          <input type="number" id="tx-amount" placeholder="0" required>
-        </div>
-
-        <div class="input-field">
-          <label>Pilih Kantung</label>
-          <select id="tx-wallet">
-            <option value="Utama">Dompet Utama</option>
-            <option value="Tabungan">Tabungan</option>
-          </select>
-        </div>
-
+      <form id="form-transaksi" class="form-grid">
         <div class="input-field full">
-          <label>Catatan / Keterangan</label>
-          <input type="text" id="tx-note" placeholder="Contoh: Beli Kopi, Bonus Proyek">
+          <label>Deskripsi Transaksi</label>
+          <input type="text" id="deskripsi" placeholder="Contoh: Beli Kopi & Camilan" required>
         </div>
-
-        <button type="submit" class="btn-primary-gradient full">Simpan Transaksi</button>
+        <div class="input-field">
+          <label>Nominal (Rp)</label>
+          <input type="number" id="nominal" placeholder="0" min="1" required>
+        </div>
+        <div class="input-field">
+          <label>Jenis</label>
+          <select id="tipe">
+            <option value="keluar">🔴 Pengeluaran</option>
+            <option value="masuk">🟢 Pemasukan</option>
+          </select>
+        </div>
+        <div class="input-field full">
+          <label>Kategori</label>
+          <select id="kategori"></select>
+        </div>
+        <button type="submit" class="btn-primary-gradient">Simpan Catatan</button>
       </form>
-    </div>
+    </section>
 
-    <!-- RIWAYAT TRANSAKSI -->
-    <div class="content-box margin-top-md">
+    <!-- Riwayat Transaksi dengan Filter & Search -->
+    <section class="content-box">
       <div class="box-header between">
         <h3>📜 Riwayat Transaksi</h3>
-        <span class="text-muted-sm">Terbaru</span>
+        <span id="transaction-count" class="badge-count">0 Transaksi</span>
       </div>
-      <ul id="history-list" class="modern-history-list margin-top-sm"></ul>
-    </div>
 
+      <!-- Controls: Filter & Search -->
+      <div class="filter-bar">
+        <input type="text" id="search-input" onkeyup="filterTransactions()" placeholder="🔍 Cari transaksi...">
+        <div class="filter-chips">
+          <button class="chip active" onclick="setFilter('all', this)">Semua</button>
+          <button class="chip" onclick="setFilter('masuk', this)">Masuk</button>
+          <button class="chip" onclick="setFilter('keluar', this)">Keluar</button>
+        </div>
+      </div>
+
+      <ul id="daftar-transaksi" class="modern-history-list"></ul>
+    </section>
   </div>
 
   <script src="app.js"></script>

@@ -1,5 +1,5 @@
-const CACHE_NAME = 'dompetku-v3';
-const assetsToCache = [
+const CACHE_NAME = 'dompetku-cache-v1';
+const urlsToCache = [
   './',
   './index.html',
   './style.css',
@@ -7,32 +7,21 @@ const assetsToCache = [
   './manifest.json'
 ];
 
-self.addEventListener('install', (e) => {
-  self.skipWaiting();
-  e.waitUntil(
+// Install Service Worker & simpan file ke memori HP
+self.addEventListener('install', (event) => {
+  event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(assetsToCache);
+      return cache.addAll(urlsToCache);
     })
   );
+  self.skipWaiting();
 });
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
+// Ambil file dari memori HP saat offline
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
     })
-  );
-  self.clients.claim();
-});
-
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
   );
 });
