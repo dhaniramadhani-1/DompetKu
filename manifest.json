@@ -1,7 +1,13 @@
 {
-  "short_name": "Dompetku",
-  "name": "Dompetku - Pengelola Keuangan Offline",
+  "short_name": "DompetKu",
+  "name": "DompetKu Pro - Pengelola Keuangan",
+  "description": "Aplikasi pengelola keuangan pribadi dan pencatat transaksi cerdas berbasis cloud.",
   "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2953/2953361.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
     {
       "src": "https://cdn-icons-png.flaticon.com/512/2953/2953361.png",
       "type": "image/png",

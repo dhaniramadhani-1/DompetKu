@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dompetku-v2'; // <-- Ubah v1 jadi v2
+const CACHE_NAME = 'dompetku-v3';
 const assetsToCache = [
   './',
   './index.html',
@@ -8,7 +8,7 @@ const assetsToCache = [
 ];
 
 self.addEventListener('install', (e) => {
-  self.skipWaiting(); // Memaksa HP langsung memakai versi baru
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(assetsToCache);
@@ -22,7 +22,7 @@ self.addEventListener('activate', (e) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            return caches.delete(key); // Menghapus cache lama
+            return caches.delete(key);
           }
         })
       );

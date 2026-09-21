@@ -1,411 +1,179 @@
-// --- CONFIGURASI GOOGLE FIREBASE ---
+// ==========================================
+// 1. KONFIGURASI FIREBASE & STATE GLOBAL
+// ==========================================
 const firebaseConfig = {
-  apiKey: "AIzaSyC5pL1W406iTsI3zlffPmAQ1hGWINvoaIM",
+  apiKey: "AIzaSy...",
   authDomain: "dompetku-e36ee.firebaseapp.com",
   projectId: "dompetku-e36ee",
-  storageBucket: "dompetku-e36ee.firebasestorage.app",
-  messagingSenderId: "348124080627",
-  appId: "1:348124080627:web:bdc4045f1c0a2ba4028a86",
-  measurementId: "G-FTJTRDYKH9"
+  storageBucket: "dompetku-e36ee.appspot.com",
+  messagingSenderId: "...",
+  appId: "..."
 };
 
-// Inisialisasi Firebase & Firestore Database
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-const googleProvider = new firebase.auth.GoogleAuthProvider();
+// Inisialisasi Firebase jika belum diinisialisasi
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
-let currentUser = null;
+let currentSymbol = "Rp ";
+let transactions = JSON.parse(localStorage.getItem("dompetku_tx")) || [];
 
-// --- GOOGLE AUTHENTICATION SYSTEM ---
-function loginWithGoogle() {
-  auth.signInWithPopup(googleProvider).catch((error) => {
-    alert("Gagal masuk dengan Google: " + error.message);
+// ==========================================
+// 2. ELEMEN DOM UTAMA
+// ==========================================
+const currencySelect = document.getElementById("currency-select");
+const btnGoogleHeader = document.getElementById("btn-google-header");
+const btnLocalLogin = document.getElementById("btn-local-login");
+const localPasswordInput = document.getElementById("local-password");
+const loginSection = document.getElementById("login-section");
+const mainDashboard = document.getElementById("main-dashboard");
+const transactionForm = document.getElementById("transaction-form");
+const historyList = document.getElementById("history-list");
+const themeToggle = document.getElementById("theme-toggle");
+
+// ==========================================
+// 3. FITUR MATA UANG DINAMIS
+// ==========================================
+function formatCurrency(amount) {
+  const number = parseFloat(amount) || 0;
+  return currentSymbol + number.toLocaleString("id-ID");
+}
+
+function loadSavedCurrency() {
+  const savedCurrency = localStorage.getItem("user_currency");
+  if (savedCurrency && currencySelect) {
+    currencySelect.value = savedCurrency;
+    const [, symbol] = savedCurrency.split("|");
+    currentSymbol = symbol;
+  }
+}
+
+if (currencySelect) {
+  currencySelect.addEventListener("change", (e) => {
+    const selectedValue = e.target.value;
+    const [, symbol] = selectedValue.split("|");
+    currentSymbol = symbol;
+    localStorage.setItem("user_currency", selectedValue);
+    updateDashboardUI();
   });
 }
 
-function logoutGoogle() {
-  if (confirm("Apakah Anda yakin ingin keluar dari akun Google ini?")) {
-    auth.signOut().then(() => {
-      location.reload();
-    });
+// ==========================================
+// 4. LOGIN LOKAL & GOOGLE CLOUD SYNC
+// ==========================================
+btnLocalLogin.addEventListener("click", () => {
+  const password = localPasswordInput.value.trim();
+  if (password === "") {
+    alert("Silakan masukkan PIN/Password!");
+    return;
   }
-}
-
-// Deteksi status Login Pengguna secara Otomatis
-auth.onAuthStateChanged((user) => {
-  if (user) {
-    currentUser = user;
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('app-screen').classList.remove('hidden');
-
-    // Set Foto Profil & Nama Pengguna dari Google
-    document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/40';
-    document.getElementById('user-name').textContent = user.displayName || 'Pengguna Google';
-
-    // Unduh Data dari Cloud Firebase
-    loadDataFromCloud();
-  } else {
-    currentUser = null;
-    document.getElementById('app-screen').classList.add('hidden');
-    document.getElementById('login-screen').classList.remove('hidden');
-  }
+  
+  // Buka Dashboard
+  loginSection.classList.add("hidden");
+  mainDashboard.classList.remove("hidden");
+  updateDashboardUI();
 });
 
+btnGoogleHeader.addEventListener("click", () => {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider)
+    .then((result) => {
+      const user = result.user;
+      document.getElementById("user-name").innerText = user.displayName;
+      document.getElementById("user-avatar").src = user.photoURL;
+      document.getElementById("google-status-text").innerText = "Tersambung";
+      document.getElementById("cloud-status-badge").innerText = "⚡ Terkoneksi: Google Cloud";
+      alert("Berhasil terhubung ke Google Cloud!");
+    })
+    .catch((error) => {
+      console.error(error);
+      alert("Gagal koneksi Google Cloud: " + error.message);
+    });
+});
 
-// --- SINKRONISASI CLOUD (FIRESTORE) ---
-let currency = 'IDR';
-let budgetLimit = 0;
-let wallets = [
-  { id: 'cash', nama: '💵 Tunai', saldo: 0 },
-  { id: 'bank', nama: '🏦 Bank/BCA', saldo: 0 },
-  { id: 'e-wallet', nama: '📱 GoPay/OVO', saldo: 0 }
-];
-let goals = [];
-let transaksi = [];
-let activeFilter = 'all';
+// ==========================================
+// 5. MANAJEMEN TRANSAKSI & UI
+// ==========================================
+transactionForm.addEventListener("submit", (e) => {
+  e.preventDefault();
 
-const currencySymbols = { IDR: 'Rp ', USD: '$', SGD: 'S$ ', MYR: 'RM ' };
+  const type = document.getElementById("tx-type").value;
+  const category = document.getElementById("tx-category").value;
+  const amount = parseFloat(document.getElementById("tx-amount").value) || 0;
+  const wallet = document.getElementById("tx-wallet").value;
+  const note = document.getElementById("tx-note").value || category;
 
-// Simpan Data ke Google Firestore
-function saveDataToCloud() {
-  if (!currentUser) return;
-  document.getElementById('sync-status').textContent = '⏳ Menyimpan...';
+  const newTx = {
+    id: Date.now(),
+    type,
+    category,
+    amount,
+    wallet,
+    note,
+    date: new Date().toLocaleDateString("id-ID")
+  };
 
-  db.collection('users').doc(currentUser.uid).set({
-    transaksi: transaksi,
-    wallets: wallets,
-    goals: goals,
-    budgetLimit: budgetLimit,
-    currency: currency,
-    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(() => {
-    document.getElementById('sync-status').textContent = '☁️ Tersimpan di Google Cloud';
-  }).catch((err) => {
-    console.error("Gagal sinkron data:", err);
-    document.getElementById('sync-status').textContent = '❌ Gagal Sinkron';
-  });
-}
+  transactions.unshift(newTx);
+  localStorage.setItem("dompetku_tx", JSON.stringify(transactions));
 
-// Memuat Data Pengguna dari Cloud Firebase
-function loadDataFromCloud() {
-  if (!currentUser) return;
-  document.getElementById('sync-status').textContent = '⏳ Memuat data...';
+  transactionForm.reset();
+  updateDashboardUI();
+});
 
-  db.collection('users').doc(currentUser.uid).get().then((doc) => {
-    if (doc.exists) {
-      const data = doc.data();
-      transaksi = data.transaksi || [];
-      wallets = data.wallets || wallets;
-      goals = data.goals || [];
-      budgetLimit = data.budgetLimit || 0;
-      currency = data.currency || 'IDR';
+function updateDashboardUI() {
+  let totalIncome = 0;
+  let totalExpense = 0;
+
+  historyList.innerHTML = "";
+
+  transactions.forEach((tx) => {
+    if (tx.type === "income") {
+      totalIncome += tx.amount;
+    } else {
+      totalExpense += tx.amount;
     }
-    updateUI();
-    document.getElementById('sync-status').textContent = '☁️ Tersimpan di Google Cloud';
-  }).catch((err) => {
-    console.error("Gagal memuat dari Cloud:", err);
-  });
-}
 
-
-// --- LOGIKA UTAMA & TAMPILAN (UI) ---
-function formatMataUang(nominal) {
-  const symbol = currencySymbols[currency] || 'Rp ';
-  return symbol + Number(nominal).toLocaleString(currency === 'IDR' ? 'id-ID' : 'en-US');
-}
-
-function changeCurrency(val) {
-  currency = val;
-  updateUI();
-  saveDataToCloud();
-}
-
-function toggleDarkMode() {
-  document.body.classList.toggle('dark-mode');
-  const isDark = document.body.classList.contains('dark-mode');
-  localStorage.setItem('theme_dark', isDark);
-  document.getElementById('theme-btn').textContent = isDark ? '☀️' : '🌙';
-}
-if (localStorage.getItem('theme_dark') === 'true') {
-  document.body.classList.add('dark-mode');
-  document.getElementById('theme-btn').textContent = '☀️';
-}
-
-function renderWallets() {
-  const walletListEl = document.getElementById('wallet-list');
-  const dompetSelectEl = document.getElementById('dompet-select');
-  walletListEl.innerHTML = '';
-  dompetSelectEl.innerHTML = '';
-
-  wallets.forEach(w => w.saldo = 0);
-  transaksi.forEach(t => {
-    const w = wallets.find(item => item.id === t.dompetId);
-    if (w) {
-      if (t.tipe === 'masuk') w.saldo += t.nominal;
-      else w.saldo -= t.nominal;
-    }
-  });
-
-  wallets.forEach(w => {
-    const div = document.createElement('div');
-    div.className = 'wallet-card';
-    div.innerHTML = `<h4>${w.nama}</h4><p>${formatMataUang(w.saldo)}</p>`;
-    walletListEl.appendChild(div);
-
-    const opt = document.createElement('option');
-    opt.value = w.id;
-    opt.textContent = w.nama;
-    dompetSelectEl.appendChild(opt);
-  });
-}
-
-function tambahDompetBaru() {
-  const nama = prompt("Nama dompet baru (contoh: 💳 Mandiri):");
-  if (nama) {
-    wallets.push({ id: 'w_' + Date.now(), nama: nama, saldo: 0 });
-    updateUI();
-    saveDataToCloud();
-  }
-}
-
-function setBudgetLimit() {
-  const input = prompt("Masukkan Batas Pengeluaran Bulanan (0 untuk reset):", budgetLimit);
-  if (input !== null) {
-    budgetLimit = parseFloat(input) || 0;
-    updateUI();
-    saveDataToCloud();
-  }
-}
-
-function updateBudgetProgress(totalKeluarBulanan) {
-  const budgetMaxEl = document.getElementById('budget-max');
-  const budgetUsedEl = document.getElementById('budget-used');
-  const progressFill = document.getElementById('budget-progress');
-  const statusEl = document.getElementById('budget-status');
-
-  budgetMaxEl.textContent = formatMataUang(budgetLimit);
-  budgetUsedEl.textContent = formatMataUang(totalKeluarBulanan);
-
-  if (budgetLimit <= 0) {
-    progressFill.style.width = '0%';
-    statusEl.textContent = "Batas pengeluaran belum diatur.";
-    return;
-  }
-
-  const persen = Math.min((totalKeluarBulanan / budgetLimit) * 100, 100);
-  progressFill.style.width = `${persen}%`;
-  progressFill.className = 'progress-fill';
-
-  if (persen >= 100) {
-    progressFill.classList.add('danger');
-    statusEl.textContent = "⚠️ PERINGATAN: Pengeluaran melampaui batas!";
-  } else if (persen >= 80) {
-    progressFill.classList.add('warning');
-    statusEl.textContent = "⚡ Hati-hati! Pengeluaran mendekati batas 80%.";
-  } else {
-    statusEl.textContent = `Penggunaan budget: ${persen.toFixed(1)}%`;
-  }
-}
-
-function renderGoals() {
-  const goalsListEl = document.getElementById('goals-list');
-  goalsListEl.innerHTML = '';
-
-  if (goals.length === 0) {
-    goalsListEl.innerHTML = '<p style="font-size:0.75rem; color: var(--text-muted);">Belum ada target impian.</p>';
-    return;
-  }
-
-  goals.forEach((g, idx) => {
-    const persen = Math.min((g.terkumpul / g.target) * 100, 100);
-    const div = document.createElement('div');
-    div.className = 'goal-card';
-    div.innerHTML = `
-      <div class="goal-header">
-        <span>${g.nama}</span>
-        <span>${formatMataUang(g.terkumpul)} / ${formatMataUang(g.target)}</span>
-      </div>
-      <div class="progress-bar">
-        <div class="progress-fill" style="width: ${persen}%"></div>
-      </div>
-      <div class="goal-header" style="font-size:0.7rem;">
-        <span>${persen.toFixed(1)}% Terkumpul</span>
-        <div>
-          <button onclick="tabungImpian(${idx})" class="btn-text">+ Tabung</button> | 
-          <button onclick="hapusImpian(${idx})" class="btn-text" style="color:var(--danger)">Hapus</button>
+    const li = document.createElement("li");
+    li.className = "history-item";
+    li.innerHTML = `
+      <div class="item-info">
+        <div class="item-details">
+          <h4>${tx.note}</h4>
+          <p>${tx.category} • ${tx.wallet} • ${tx.date}</p>
         </div>
+      </div>
+      <div class="amount ${tx.type === "income" ? "in" : "out"}">
+        ${tx.type === "income" ? "+" : "-"} ${formatCurrency(tx.amount)}
       </div>
     `;
-    goalsListEl.appendChild(div);
-  });
-}
-
-function tambahImpianBaru() {
-  const nama = prompt("Nama Impian:");
-  const target = prompt("Target Nominal (Rp):");
-  if (nama && target) {
-    goals.push({ nama: nama, target: parseFloat(target), terkumpul: 0 });
-    updateUI();
-    saveDataToCloud();
-  }
-}
-
-function tabungImpian(index) {
-  const nominal = prompt(`Nabung untuk "${goals[index].nama}" (Rp):`);
-  if (nominal) {
-    goals[index].terkumpul += parseFloat(nominal);
-    updateUI();
-    saveDataToCloud();
-  }
-}
-
-function hapusImpian(index) {
-  if (confirm("Hapus impian ini?")) {
-    goals.splice(index, 1);
-    updateUI();
-    saveDataToCloud();
-  }
-}
-
-function cetakPDF() {
-  const element = document.getElementById('app-screen');
-  const opt = {
-    margin: 0.2,
-    filename: `Laporan_Keuangan_Dompetku.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-  };
-  html2pdf().set(opt).from(element).save();
-}
-
-const opsiKategori = {
-  keluar: [
-    { nama: 'Makanan & Minuman', emoji: '🍕' },
-    { nama: 'Tagihan & Belanja', emoji: '🛒' },
-    { nama: 'Transportasi', emoji: '🚗' },
-    { nama: 'Hiburan', emoji: '🎮' },
-    { nama: 'Lainnya', emoji: '📦' }
-  ],
-  masuk: [
-    { nama: 'Gaji Bulanan', emoji: '💵' },
-    { nama: 'Side Job', emoji: '🎁' },
-    { nama: 'Investasi', emoji: '📈' },
-    { nama: 'Lainnya', emoji: '💰' }
-  ]
-};
-
-const form = document.getElementById('form-transaksi');
-const selectTipe = document.getElementById('tipe');
-const selectKategori = document.getElementById('kategori');
-
-function updateKategoriOptions() {
-  const tipe = selectTipe.value;
-  selectKategori.innerHTML = '';
-  opsiKategori[tipe].forEach(item => {
-    const option = document.createElement('option');
-    option.value = `${item.emoji} ${item.nama}`;
-    option.textContent = `${item.emoji} ${item.nama}`;
-    selectKategori.appendChild(option);
-  });
-}
-
-function updateUI() {
-  document.getElementById('currency-select').value = currency;
-  renderWallets();
-  renderGoals();
-
-  const daftarTransaksiEl = document.getElementById('daftar-transaksi');
-  daftarTransaksiEl.innerHTML = '';
-
-  let totalMasuk = 0;
-  let totalKeluar = 0;
-
-  const searchKeyword = document.getElementById('search-input').value.toLowerCase();
-  const filteredData = transaksi.filter(item => {
-    const matchFilter = activeFilter === 'all' || item.tipe === activeFilter;
-    const matchSearch = item.deskripsi.toLowerCase().includes(searchKeyword) || item.kategori.toLowerCase().includes(searchKeyword);
-    return matchFilter && matchSearch;
+    historyList.appendChild(li);
   });
 
-  transaksi.forEach(item => {
-    if (item.tipe === 'masuk') totalMasuk += item.nominal;
-    else totalKeluar += item.nominal;
-  });
+  const totalBalance = totalIncome - totalExpense;
 
-  if (filteredData.length === 0) {
-    daftarTransaksiEl.innerHTML = '<li style="text-align: center; color: var(--text-muted); padding: 16px; font-size: 0.75rem;">Tidak ada catatan.</li>';
-  } else {
-    filteredData.forEach((item) => {
-      const originalIndex = transaksi.indexOf(item);
-      const li = document.createElement('li');
-      li.className = 'history-item';
-      const isMasuk = item.tipe === 'masuk';
-      const walletObj = wallets.find(w => w.id === item.dompetId);
+  document.getElementById("total-balance").innerText = formatCurrency(totalBalance);
+  document.getElementById("total-income").innerText = formatCurrency(totalIncome);
+  document.getElementById("total-expense").innerText = formatCurrency(totalExpense);
 
-      li.innerHTML = `
-        <div class="item-info">
-          <div class="item-icon">${item.kategori.split(' ')[0]}</div>
-          <div class="item-details">
-            <h4>${item.deskripsi}</h4>
-            <p>${item.kategori.substring(2)} • ${walletObj ? walletObj.nama : 'Umum'} • ${item.tanggal}</p>
-          </div>
-        </div>
-        <div class="item-right">
-          <span class="amount ${isMasuk ? 'in' : 'out'}">${isMasuk ? '+' : '-'} ${formatMataUang(item.nominal)}</span>
-          <button onclick="hapusTransaksi(${originalIndex})" class="btn-delete-item">✕</button>
-        </div>
-      `;
-      daftarTransaksiEl.appendChild(li);
-    });
-  }
-
-  document.getElementById('total-masuk').textContent = formatMataUang(totalMasuk);
-  document.getElementById('total-keluar').textContent = formatMataUang(totalKeluar);
-  document.getElementById('sisa-saldo').textContent = formatMataUang(totalMasuk - totalKeluar);
-  document.getElementById('transaction-count').textContent = `${transaksi.length} Transaksi`;
-
-  updateBudgetProgress(totalKeluar);
+  // Render Wallet Grid Dummy
+  const walletGrid = document.getElementById("wallet-grid");
+  walletGrid.innerHTML = `
+    <div class="wallet-card">
+      <h4>Dompet Utama</h4>
+      <p>${formatCurrency(totalBalance * 0.7)}</p>
+    </div>
+    <div class="wallet-card">
+      <h4>Kantung Tabungan</h4>
+      <p>${formatCurrency(totalBalance * 0.3)}</p>
+    </div>
+  `;
 }
 
-function setFilter(type, btn) {
-  activeFilter = type;
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  btn.classList.add('active');
-  updateUI();
-}
-
-function filterTransactions() { updateUI(); }
-
-form.addEventListener('submit', (e) => {
-  e.preventDefault();
-  transaksi.unshift({
-    deskripsi: document.getElementById('deskripsi').value,
-    nominal: parseFloat(document.getElementById('nominal').value),
-    tipe: selectTipe.value,
-    dompetId: document.getElementById('dompet-select').value,
-    kategori: selectKategori.value,
-    tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
-  });
-
-  updateUI();
-  saveDataToCloud();
-  document.getElementById('deskripsi').value = '';
-  document.getElementById('nominal').value = '';
+// Mode Gelap/Terang Toggle
+themeToggle.addEventListener("click", () => {
+  document.body.classList.toggle("light-mode");
+  themeToggle.innerText = document.body.classList.contains("light-mode") ? "☀️" : "🌙";
 });
 
-function hapusTransaksi(index) {
-  transaksi.splice(index, 1);
-  updateUI();
-  saveDataToCloud();
-}
-
-selectTipe.addEventListener('change', updateKategoriOptions);
-updateKategoriOptions();
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
-  });
-}
+// Inisialisasi Awal
+loadSavedCurrency();
