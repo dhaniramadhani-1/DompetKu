@@ -3,71 +3,104 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dompetku - Pengelola Keuangan Modern</title>
+  <title>Dompetku Pro - Pengelola Keuangan Super</title>
   <link rel="stylesheet" href="style.css">
-  <!-- METADATA UNTUK APLIKASI OFFLINE (PWA) -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f172a">
+
+  <!-- Library html2pdf untuk Cetak PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <!-- Google Firebase SDKs (v9 Compat Mode) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-  <!-- LAYER LOGIN LOCKSCREEN -->
+  <!-- OVERLAY LOGIN (GOOGLE SIGN-IN) -->
   <div id="login-screen" class="login-overlay">
     <div class="lockscreen-card">
-      <div class="brand-badge">💰 Dompetku</div>
-      <h2 id="login-title">Selamat Datang</h2>
-      <p id="login-subtitle">Masukkan PIN keamanan Anda</p>
+      <div class="brand-badge">💰 Dompetku Cloud</div>
+      <h2>Selamat Datang</h2>
+      <p>Masuk dengan Akun Google Anda untuk mengamankan & menyinkronkan data keuangan Anda.</p>
 
-      <div id="pin-dots" class="pin-dots-container">
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-      </div>
+      <button id="btn-google-login" onclick="loginWithGoogle()" class="btn-google">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        Masuk dengan Google
+      </button>
 
-      <div class="keypad-grid">
-        <button class="key-btn" onclick="pressKey('1')">1</button>
-        <button class="key-btn" onclick="pressKey('2')">2</button>
-        <button class="key-btn" onclick="pressKey('3')">3</button>
-        <button class="key-btn" onclick="pressKey('4')">4</button>
-        <button class="key-btn" onclick="pressKey('5')">5</button>
-        <button class="key-btn" onclick="pressKey('6')">6</button>
-        <button class="key-btn" onclick="pressKey('7')">7</button>
-        <button class="key-btn" onclick="pressKey('8')">8</button>
-        <button class="key-btn" onclick="pressKey('9')">9</button>
-        <button class="key-btn action" onclick="clearKey()"><small>Hapus</small></button>
-        <button class="key-btn" onclick="pressKey('0')">0</button>
-        <button class="key-btn action primary" onclick="submitPIN()">✓</button>
+      <div class="sync-info">
+        <span>🔒 Data Anda tersimpan aman di Cloud Google.</span>
       </div>
     </div>
   </div>
 
   <!-- HALAMAN UTAMA APLIKASI -->
   <div id="app-screen" class="app-container hidden">
+    <!-- Header -->
     <header class="app-header">
       <div class="user-profile">
-        <div class="avatar">💎</div>
+        <img id="user-avatar" class="avatar-img" src="" alt="Avatar">
         <div>
-          <span class="greeting">Halo, Pengguna</span>
-          <h1 class="brand-title">Dompetku Dashboard</h1>
+          <span class="greeting" id="user-name">Halo, Pengguna</span>
+          <h1 class="brand-title">Dashboard Keuangan</h1>
         </div>
       </div>
       <div class="header-actions">
-        <button onclick="eksporKeCSV()" class="btn-icon" title="Ekspor Laporan">📊 <span>Laporan</span></button>
-        <button onclick="lockApp()" class="btn-icon danger" title="Kunci Aplikasi">🔒</button>
+        <select id="currency-select" onchange="changeCurrency(this.value)" class="select-sm">
+          <option value="IDR">Rp (IDR)</option>
+          <option value="USD">$ (USD)</option>
+          <option value="SGD">S$ (SGD)</option>
+          <option value="MYR">RM (MYR)</option>
+        </select>
+        <button onclick="toggleDarkMode()" class="btn-icon" id="theme-btn">🌙</button>
+        <button onclick="logoutGoogle()" class="btn-icon danger" title="Keluar">🚪</button>
       </div>
     </header>
 
-    <section class="main-balance-card">
-      <div class="balance-info">
-        <p class="balance-label">Total Saldo Bersih</p>
-        <h2 id="sisa-saldo" class="balance-amount">Rp 0</h2>
+    <!-- STATUS SINKRONISASI CLOUD & CETAK PDF -->
+    <section class="content-box-sm">
+      <div class="backup-bar">
+        <span id="sync-status">☁️ Sinkron Otomatis (Aktif)</span>
+        <button onclick="cetakPDF()" class="btn-xs success">📄 Cetak PDF</button>
       </div>
-      <div class="balance-badge">Aktif</div>
     </section>
 
+    <!-- Main Balance Card -->
+    <section class="main-balance-card">
+      <div class="balance-info">
+        <p class="balance-label">Total Saldo (Semua Dompet)</p>
+        <h2 id="sisa-saldo" class="balance-amount">Rp 0</h2>
+      </div>
+      <div class="balance-badge">Terhubung Cloud</div>
+    </section>
+
+    <!-- FITUR MULTI-KANTUNG / MULTI-DOMPET -->
+    <section class="content-box">
+      <div class="box-header between">
+        <h3>👛 Dompet & Kantung Saya</h3>
+        <button onclick="tambahDompetBaru()" class="btn-text">+ Tambah</button>
+      </div>
+      <div id="wallet-list" class="wallet-grid"></div>
+    </section>
+
+    <!-- FITUR BUDGETING & BATAS PENGELUARAN -->
+    <section class="content-box warning-box">
+      <div class="box-header between">
+        <h3>🎯 Batas Pengeluaran Bulanan</h3>
+        <button onclick="setBudgetLimit()" class="btn-text">Atur Batas</button>
+      </div>
+      <div class="budget-info">
+        <p><span id="budget-used">Rp 0</span> / <span id="budget-max">Rp 0</span></p>
+        <div class="progress-bar">
+          <div id="budget-progress" class="progress-fill"></div>
+        </div>
+        <small id="budget-status">Batas pengeluaran belum diatur.</small>
+      </div>
+    </section>
+
+    <!-- Ringkasan Keuangan Grid -->
     <section class="summary-cards">
       <div class="card-stat income">
         <div class="stat-icon">⬇️</div>
@@ -85,6 +118,16 @@
       </div>
     </section>
 
+    <!-- FITUR TABUNGAN & IMPIAN -->
+    <section class="content-box">
+      <div class="box-header between">
+        <h3>🚀 Tabungan & Impian</h3>
+        <button onclick="tambahImpianBaru()" class="btn-text">+ Impian Baru</button>
+      </div>
+      <div id="goals-list" class="goals-container"></div>
+    </section>
+
+    <!-- Form Tambah Transaksi -->
     <section class="content-box">
       <div class="box-header">
         <h3>✨ Tambah Transaksi Baru</h3>
@@ -92,10 +135,10 @@
       <form id="form-transaksi" class="form-grid">
         <div class="input-field full">
           <label>Deskripsi Transaksi</label>
-          <input type="text" id="deskripsi" placeholder="Contoh: Beli Kopi & Camilan" required>
+          <input type="text" id="deskripsi" placeholder="Contoh: Beli Kopi" required>
         </div>
         <div class="input-field">
-          <label>Nominal (Rp)</label>
+          <label>Nominal</label>
           <input type="number" id="nominal" placeholder="0" min="1" required>
         </div>
         <div class="input-field">
@@ -105,7 +148,11 @@
             <option value="masuk">🟢 Pemasukan</option>
           </select>
         </div>
-        <div class="input-field full">
+        <div class="input-field">
+          <label>Pilih Dompet</label>
+          <select id="dompet-select"></select>
+        </div>
+        <div class="input-field">
           <label>Kategori</label>
           <select id="kategori"></select>
         </div>
@@ -113,6 +160,7 @@
       </form>
     </section>
 
+    <!-- Riwayat Transaksi -->
     <section class="content-box">
       <div class="box-header between">
         <h3>📜 Riwayat Transaksi</h3>
