@@ -1,4 +1,4 @@
-// --- SISTEM LOGIN LOCKSCREEN & KEYPAD (6 DIGIT) ---
+// --- SISTEM LOCKSCREEN & KEYPAD & GOOGLE LOGIN ---
 let currentPINInput = "";
 const savedPIN = localStorage.getItem('app_pin_code');
 
@@ -19,9 +19,7 @@ function pressKey(num) {
   if (currentPINInput.length < 6) {
     currentPINInput += num;
     updateDots();
-    if (currentPINInput.length === 6) {
-      setTimeout(submitPIN, 100);
-    }
+    if (currentPINInput.length === 6) setTimeout(submitPIN, 100);
   }
 }
 
@@ -32,19 +30,13 @@ function clearKey() {
 
 function updateDots() {
   dots.forEach((dot, idx) => {
-    if (idx < currentPINInput.length) {
-      dot.classList.add('active');
-    } else {
-      dot.classList.remove('active');
-    }
+    if (idx < currentPINInput.length) dot.classList.add('active');
+    else dot.classList.remove('active');
   });
 }
 
 function submitPIN() {
-  if (currentPINInput.length < 6) {
-    alert("PIN harus berisi 6 angka!");
-    return;
-  }
+  if (currentPINInput.length < 6) return alert("PIN harus berisi 6 angka!");
 
   if (!savedPIN) {
     localStorage.setItem('app_pin_code', currentPINInput);
@@ -62,11 +54,29 @@ function submitPIN() {
   }
 }
 
+function loginGoogle() {
+  const mockUser = {
+    name: "Dhani Ramadhani",
+    avatar: "https://lh3.googleusercontent.com/a/default-user=s96-c"
+  };
+  localStorage.setItem('app_google_user', 'true');
+  localStorage.setItem('user_profile_name', mockUser.name);
+  localStorage.setItem('user_profile_avatar', mockUser.avatar);
+  
+  if (!localStorage.getItem('app_pin_code')) {
+    localStorage.setItem('app_pin_code', '123456');
+  }
+
+  alert(`Selamat datang kembali, ${mockUser.name}!`);
+  unlockApp();
+}
+
 function unlockApp() {
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-screen').classList.remove('hidden');
   currentPINInput = "";
   updateDots();
+  loadUserProfile();
 }
 
 function lockApp() {
@@ -74,14 +84,101 @@ function lockApp() {
   document.getElementById('login-screen').classList.remove('hidden');
 }
 
+function loadUserProfile() {
+  const userName = localStorage.getItem('user_profile_name') || 'Pengguna';
+  const userAvatar = localStorage.getItem('user_profile_avatar');
 
-// --- LOGIKA UTAMA KEUANGAN & FILTER ---
+  document.getElementById('user-name').textContent = userName;
+  if (userAvatar) {
+    document.getElementById('user-avatar').innerHTML = `<img src="${userAvatar}" alt="Avatar">`;
+  }
+}
+
+// --- FITUR DARK MODE ---
+function toggleDarkMode() {
+  document.body.classList.toggle('dark-mode');
+  const isDark = document.body.classList.contains('dark-mode');
+  localStorage.setItem('app_dark_mode', isDark);
+}
+
+if (localStorage.getItem('app_dark_mode') === 'true') {
+  document.body.classList.add('dark-mode');
+}
+
+// --- FITUR MULTI-CURRENCY (MATA UANG) ---
+const currencyFormats = {
+  IDR: { locale: 'id-ID', currency: 'IDR' },
+  USD: { locale: 'en-US', currency: 'USD' },
+  EUR: { locale: 'de-DE', currency: 'EUR' },
+  JPY: { locale: 'ja-JP', currency: 'JPY' },
+  MYR: { locale: 'ms-MY', currency: 'MYR' },
+  SGD: { locale: 'en-SG', currency: 'SGD' }
+};
+
+let currentCurrency = localStorage.getItem('app_currency') || 'IDR';
+document.getElementById('currency-selector').value = currentCurrency;
+
+function changeCurrency(val) {
+  currentCurrency = val;
+  localStorage.setItem('app_currency', val);
+  updateUI();
+}
+
+function formatMataUang(angka) {
+  const config = currencyFormats[currentCurrency] || currencyFormats.IDR;
+  return new Intl.NumberFormat(config.locale, {
+    style: 'currency',
+    currency: config.currency,
+    maximumFractionDigits: currentCurrency === 'IDR' || currentCurrency === 'JPY' ? 0 : 2
+  }).format(angka);
+}
+
+// --- AKUN SAMA & CUSTOM AKUN ---
+const defaultAkun = [
+  { id: 'cash', nama: 'Cash', icon: '💵' },
+  { id: 'bca', nama: 'BCA', icon: '🏦' },
+  { id: 'gopay', nama: 'GoPay', icon: '🟢' },
+  { id: 'ovo', nama: 'OVO', icon: '💜' },
+  { id: 'dana', nama: 'DANA', icon: '🔵' }
+];
+
+let daftarAkun = JSON.parse(localStorage.getItem('keuangan_app_accounts')) || defaultAkun;
+
+function toggleAccountForm() {
+  document.getElementById('form-akun').classList.toggle('hidden');
+}
+
+function tambahAkunCustom(e) {
+  e.preventDefault();
+  const nama = document.getElementById('akun-nama').value.trim();
+  const icon = document.getElementById('akun-icon').value;
+  const id = 'custom_' + Date.now();
+
+  if (nama) {
+    daftarAkun.push({ id, nama, icon, isCustom: true });
+    localStorage.setItem('keuangan_app_accounts', JSON.stringify(daftarAkun));
+    document.getElementById('form-akun').reset();
+    toggleAccountForm();
+    updateUI();
+  }
+}
+
+function hapusAkunCustom(id) {
+  if (confirm("Hapus sumber akun ini? Transaksi lamanya akan dialihkan ke Cash.")) {
+    daftarAkun = daftarAkun.filter(a => a.id !== id);
+    localStorage.setItem('keuangan_app_accounts', JSON.stringify(daftarAkun));
+    updateUI();
+  }
+}
+
+// --- LOGIKA UTAMA KEUANGAN ---
 const opsiKategori = {
   keluar: [
     { nama: 'Makanan & Minuman', emoji: '🍕' },
     { nama: 'Tagihan & Belanja', emoji: '🛒' },
     { nama: 'Transportasi', emoji: '🚗' },
     { nama: 'Hiburan & Hobi', emoji: '🎮' },
+    { nama: 'Tabungan Impian', emoji: '🎯' },
     { nama: 'Lainnya', emoji: '📦' }
   ],
   masuk: [
@@ -93,12 +190,15 @@ const opsiKategori = {
 };
 
 let transaksi = JSON.parse(localStorage.getItem('keuangan_app_db')) || [];
+let targetTabungan = JSON.parse(localStorage.getItem('keuangan_app_savings')) || [];
+let batasPengeluaran = parseFloat(localStorage.getItem('keuangan_app_budget')) || 0;
 let activeFilter = 'all';
 
 const form = document.getElementById('form-transaksi');
 const inputDeskripsi = document.getElementById('deskripsi');
 const inputNominal = document.getElementById('nominal');
 const selectTipe = document.getElementById('tipe');
+const selectAkun = document.getElementById('sumber-akun');
 const selectKategori = document.getElementById('kategori');
 
 const totalMasukEl = document.getElementById('total-masuk');
@@ -118,51 +218,83 @@ function updateKategoriOptions() {
   });
 }
 
-function formatRupiah(angka) {
-  return 'Rp ' + Number(angka).toLocaleString('id-ID');
+function updateSelectAkunOptions() {
+  selectAkun.innerHTML = '';
+  daftarAkun.forEach(ak => {
+    const option = document.createElement('option');
+    option.value = ak.id;
+    option.textContent = `${ak.icon} ${ak.nama}`;
+    selectAkun.appendChild(option);
+  });
 }
 
 function updateUI() {
+  updateSelectAkunOptions();
   daftarTransaksiEl.innerHTML = '';
   let totalMasuk = 0;
   let totalKeluar = 0;
 
-  // Filter Data
+  let saldoPerAkun = {};
+  daftarAkun.forEach(a => saldoPerAkun[a.id] = 0);
+
+  // Hitung Saldo & Akun
+  transaksi.forEach(item => {
+    const ak = item.akun || 'cash';
+    if (saldoPerAkun[ak] === undefined) saldoPerAkun[ak] = 0;
+
+    if (item.tipe === 'masuk') {
+      totalMasuk += item.nominal;
+      saldoPerAkun[ak] += item.nominal;
+    } else {
+      totalKeluar += item.nominal;
+      saldoPerAkun[ak] -= item.nominal;
+    }
+  });
+
+  // Render Kartu Akun
+  const accountsListEl = document.getElementById('accounts-list');
+  accountsListEl.innerHTML = '';
+  daftarAkun.forEach(ak => {
+    const div = document.createElement('div');
+    div.className = 'account-card';
+    div.innerHTML = `
+      ${ak.isCustom ? `<button onclick="hapusAkunCustom('${ak.id}')" class="btn-del-account">✕</button>` : ''}
+      <div class="icon">${ak.icon}</div>
+      <div class="name">${ak.nama}</div>
+      <div class="bal">${formatMataUang(saldoPerAkun[ak.id] || 0)}</div>
+    `;
+    accountsListEl.appendChild(div);
+  });
+
+  // Render Transaksi Ter-filter
   const searchKeyword = document.getElementById('search-input').value.toLowerCase();
-  
   const filteredData = transaksi.filter(item => {
     const matchFilter = activeFilter === 'all' || item.tipe === activeFilter;
-    const matchSearch = item.deskripsi.toLowerCase().includes(searchKeyword) || 
-                        item.kategori.toLowerCase().includes(searchKeyword);
+    const matchSearch = item.deskripsi.toLowerCase().includes(searchKeyword) || item.kategori.toLowerCase().includes(searchKeyword);
     return matchFilter && matchSearch;
   });
 
-  // Hitung Totalkeseluruhan (bukan cuma yg ter-filter)
-  transaksi.forEach(item => {
-    if (item.tipe === 'masuk') totalMasuk += item.nominal;
-    else totalKeluar += item.nominal;
-  });
-
   if (filteredData.length === 0) {
-    daftarTransaksiEl.innerHTML = '<li style="text-align: center; color: #94a3b8; padding: 20px; font-size: 0.8rem;">Tidak ada catatan transaksi.</li>';
+    daftarTransaksiEl.innerHTML = '<li style="text-align: center; color: #94a3b8; padding: 16px; font-size: 0.8rem;">Tidak ada catatan transaksi.</li>';
   } else {
-    filteredData.forEach((item, index) => {
+    filteredData.forEach((item) => {
       const originalIndex = transaksi.indexOf(item);
       const li = document.createElement('li');
       li.className = 'history-item';
       const isMasuk = item.tipe === 'masuk';
+      const akObj = daftarAkun.find(a => a.id === (item.akun || 'cash')) || { nama: 'Cash' };
 
       li.innerHTML = `
         <div class="item-info">
           <div class="item-icon">${item.kategori.split(' ')[0]}</div>
           <div class="item-details">
             <h4>${item.deskripsi}</h4>
-            <p>${item.kategori.substring(2)} • ${item.tanggal}</p>
+            <p>${item.kategori.substring(2)} • ${akObj.nama} • ${item.tanggal}</p>
           </div>
         </div>
         <div class="item-right">
           <span class="amount ${isMasuk ? 'in' : 'out'}">
-            ${isMasuk ? '+' : '-'} ${formatRupiah(item.nominal)}
+            ${isMasuk ? '+' : '-'} ${formatMataUang(item.nominal)}
           </span>
           <button onclick="hapusTransaksi(${originalIndex})" class="btn-delete-item">✕</button>
         </div>
@@ -171,14 +303,138 @@ function updateUI() {
     });
   }
 
-  totalMasukEl.textContent = formatRupiah(totalMasuk);
-  totalKeluarEl.textContent = formatRupiah(totalKeluar);
-  sisaSaldoEl.textContent = formatRupiah(totalMasuk - totalKeluar);
+  totalMasukEl.textContent = formatMataUang(totalMasuk);
+  totalKeluarEl.textContent = formatMataUang(totalKeluar);
+  sisaSaldoEl.textContent = formatMataUang(totalMasuk - totalKeluar);
   transactionCountEl.textContent = `${transaksi.length} Transaksi`;
+
+  updateBudgetUI(totalKeluar);
+  renderSavings();
 
   localStorage.setItem('keuangan_app_db', JSON.stringify(transaksi));
 }
 
+// --- BATAS MAKSIMAL PENGELUARAN ---
+function setMonthlyBudget() {
+  const input = prompt(`Masukkan batas pengeluaran bulan ini (${currentCurrency}):`, batasPengeluaran);
+  if (input !== null) {
+    batasPengeluaran = parseFloat(input) || 0;
+    localStorage.setItem('keuangan_app_budget', batasPengeluaran);
+    updateUI();
+  }
+}
+
+function updateBudgetUI(totalPengeluaran) {
+  const budgetUsedEl = document.getElementById('budget-used-text');
+  const budgetLimitEl = document.getElementById('budget-limit-text');
+  const progressBar = document.getElementById('budget-progress-bar');
+  const warningEl = document.getElementById('budget-warning');
+
+  budgetUsedEl.textContent = `Terpakai: ${formatMataUang(totalPengeluaran)}`;
+  budgetLimitEl.textContent = `Batas: ${formatMataUang(batasPengeluaran)}`;
+
+  if (batasPengeluaran > 0) {
+    let persen = (totalPengeluaran / batasPengeluaran) * 100;
+    progressBar.style.width = `${Math.min(persen, 100)}%`;
+
+    if (persen >= 100) {
+      progressBar.style.backgroundColor = 'var(--danger)';
+      warningEl.textContent = '⚠️ Pengeluaran Anda telah MELEBIHI batas anggaran!';
+    } else if (persen >= 80) {
+      progressBar.style.backgroundColor = 'var(--warning)';
+      warningEl.textContent = '⚠️ Hati-hati, pengeluaran mendekati batas anggaran!';
+    } else {
+      progressBar.style.backgroundColor = 'var(--success)';
+      warningEl.textContent = '';
+    }
+  } else {
+    progressBar.style.width = '0%';
+    warningEl.textContent = 'Batas anggaran belum diatur.';
+  }
+}
+
+// --- TABUNGAN & TARGET IMPAN ---
+function toggleSavingsForm() {
+  document.getElementById('form-tabungan').classList.toggle('hidden');
+}
+
+function tambahTargetTabungan(e) {
+  e.preventDefault();
+  const nama = document.getElementById('target-nama').value;
+  const target = parseFloat(document.getElementById('target-nominal').value);
+  const terkumpul = parseFloat(document.getElementById('target-terkumpul').value) || 0;
+
+  targetTabungan.push({ nama, target, terkumpul });
+  localStorage.setItem('keuangan_app_savings', JSON.stringify(targetTabungan));
+
+  document.getElementById('form-tabungan').reset();
+  toggleSavingsForm();
+  renderSavings();
+}
+
+function nambahSaldoTabungan(idx) {
+  const input = prompt(`Tambah tabungan untuk "${targetTabungan[idx].nama}" (${currentCurrency}):`);
+  if (input) {
+    const nominal = parseFloat(input);
+    if (nominal > 0) {
+      targetTabungan[idx].terkumpul += nominal;
+
+      transaksi.unshift({
+        deskripsi: `Tabungan: ${targetTabungan[idx].nama}`,
+        nominal: nominal,
+        tipe: 'keluar',
+        akun: 'cash',
+        kategori: '🎯 Tabungan Impian',
+        tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+      });
+
+      localStorage.setItem('keuangan_app_savings', JSON.stringify(targetTabungan));
+      updateUI();
+    }
+  }
+}
+
+function hapusTabungan(idx) {
+  if (confirm("Hapus target tabungan ini?")) {
+    targetTabungan.splice(idx, 1);
+    localStorage.setItem('keuangan_app_savings', JSON.stringify(targetTabungan));
+    renderSavings();
+  }
+}
+
+function renderSavings() {
+  const listEl = document.getElementById('savings-list');
+  listEl.innerHTML = '';
+
+  if (targetTabungan.length === 0) {
+    listEl.innerHTML = '<p style="text-align: center; color: #94a3b8; font-size: 0.78rem;">Belum ada target barang impian.</p>';
+    return;
+  }
+
+  targetTabungan.forEach((item, idx) => {
+    const persen = Math.min((item.terkumpul / item.target) * 100, 100).toFixed(0);
+    const div = document.createElement('div');
+    div.className = 'saving-item';
+    div.innerHTML = `
+      <div class="saving-header">
+        <span class="saving-title">🎯 ${item.nama}</span>
+        <div>
+          <button onclick="nambahSaldoTabungan(${idx})" class="btn-text">+ Tabung</button>
+          <button onclick="hapusTabungan(${idx})" class="btn-delete-item" style="margin-left:8px;">✕</button>
+        </div>
+      </div>
+      <div class="saving-amounts">
+        <span>${formatMataUang(item.terkumpul)} dari ${formatMataUang(item.target)} (${persen}%)</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" style="width: ${persen}%; background-color: var(--primary);"></div>
+      </div>
+    `;
+    listEl.appendChild(div);
+  });
+}
+
+// --- FORM TRANSAKSI HANDLER ---
 function setFilter(type, btn) {
   activeFilter = type;
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
@@ -186,9 +442,7 @@ function setFilter(type, btn) {
   updateUI();
 }
 
-function filterTransactions() {
-  updateUI();
-}
+function filterTransactions() { updateUI(); }
 
 form.addEventListener('submit', (e) => {
   e.preventDefault();
@@ -196,6 +450,7 @@ form.addEventListener('submit', (e) => {
     deskripsi: inputDeskripsi.value,
     nominal: parseFloat(inputNominal.value),
     tipe: selectTipe.value,
+    akun: selectAkun.value,
     kategori: selectKategori.value,
     tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
   });
@@ -212,9 +467,9 @@ function hapusTransaksi(index) {
 
 function eksporKeCSV() {
   if (transaksi.length === 0) return alert('Belum ada data.');
-  let csv = 'Tanggal,Jenis,Kategori,Deskripsi,Nominal\n';
+  let csv = 'Tanggal,Jenis,Akun,Kategori,Deskripsi,Nominal,MataUang\n';
   transaksi.forEach(t => {
-    csv += `"${t.tanggal}","${t.tipe}","${t.kategori}","${t.deskripsi}",${t.nominal}\n`;
+    csv += `"${t.tanggal}","${t.tipe}","${t.akun}","${t.kategori}","${t.deskripsi}",${t.nominal},"${currentCurrency}"\n`;
   });
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = window.URL.createObjectURL(blob);
@@ -228,11 +483,9 @@ selectTipe.addEventListener('change', updateKategoriOptions);
 updateKategoriOptions();
 updateUI();
 
-// --- REGISTRASI SERVICE WORKER UNTUK AKSES OFFLINE ---
+// Service Worker Registration
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('Service Worker terdaftar untuk offline mode:', reg))
-      .catch(err => console.error('Gagal mendaftarkan Service Worker:', err));
+    navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Error', err));
   });
 }

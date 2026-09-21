@@ -17,7 +17,6 @@
       <h2 id="login-title">Selamat Datang</h2>
       <p id="login-subtitle">Masukkan PIN keamanan Anda</p>
 
-      <!-- Indikator 6 Titik PIN -->
       <div id="pin-dots" class="pin-dots-container">
         <span class="dot"></span>
         <span class="dot"></span>
@@ -27,7 +26,6 @@
         <span class="dot"></span>
       </div>
 
-      <!-- Keypad Angka Visual -->
       <div class="keypad-grid">
         <button class="key-btn" onclick="pressKey('1')">1</button>
         <button class="key-btn" onclick="pressKey('2')">2</button>
@@ -42,21 +40,39 @@
         <button class="key-btn" onclick="pressKey('0')">0</button>
         <button class="key-btn action primary" onclick="submitPIN()">✓</button>
       </div>
+
+      <div class="divider"><span>atau</span></div>
+
+      <!-- FITUR LOGIN GOOGLE -->
+      <button onclick="loginGoogle()" class="btn-google">
+        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width="18">
+        Masuk dengan Google
+      </button>
     </div>
   </div>
 
-  <!-- HALAMAN UTAMA APLIKASI MODERN -->
+  <!-- HALAMAN UTAMA APLIKASI -->
   <div id="app-screen" class="app-container hidden">
-    <!-- Header App -->
+    <!-- Header -->
     <header class="app-header">
       <div class="user-profile">
-        <div class="avatar">💎</div>
+        <div class="avatar" id="user-avatar">💎</div>
         <div>
-          <span class="greeting">Halo, Pengguna</span>
+          <span class="greeting">Halo, <strong id="user-name">Pengguna</strong></span>
           <h1 class="brand-title">Dompetku Dashboard</h1>
         </div>
       </div>
       <div class="header-actions">
+        <!-- PENGATURAN MATA UANG -->
+        <select id="currency-selector" onchange="changeCurrency(this.value)" class="currency-select" title="Pilih Mata Uang">
+          <option value="IDR">IDR (Rp)</option>
+          <option value="USD">USD ($)</option>
+          <option value="EUR">EUR (€)</option>
+          <option value="JPY">JPY (¥)</option>
+          <option value="MYR">MYR (RM)</option>
+          <option value="SGD">SGD (S$)</option>
+        </select>
+        <button onclick="toggleDarkMode()" class="btn-icon" title="Ubah Mode">🌙</button>
         <button onclick="eksporKeCSV()" class="btn-icon" title="Ekspor Laporan">📊 <span>Laporan</span></button>
         <button onclick="lockApp()" class="btn-icon danger" title="Kunci Aplikasi">🔒</button>
       </div>
@@ -66,9 +82,41 @@
     <section class="main-balance-card">
       <div class="balance-info">
         <p class="balance-label">Total Saldo Bersih</p>
-        <h2 id="sisa-saldo" class="balance-amount">Rp 0</h2>
+        <h2 id="sisa-saldo" class="balance-amount">0</h2>
       </div>
       <div class="balance-badge">Aktif</div>
+    </section>
+
+    <!-- FITUR PEMISAH KEUANGAN & TAMBAH AKUN CUSTOM -->
+    <section class="accounts-section">
+      <div class="box-header between">
+        <h3>💳 Sumber Dana / Akun</h3>
+        <button onclick="toggleAccountForm()" class="btn-text">+ Tambah Akun</button>
+      </div>
+
+      <!-- Form Tambah Akun / Bank Custom (Hidden default) -->
+      <form id="form-akun" class="form-grid hidden" onsubmit="tambahAkunCustom(event)">
+        <div class="input-field">
+          <label>Nama Akun / Bank / E-Wallet</label>
+          <input type="text" id="akun-nama" placeholder="Contoh: Blu BCA / LinkAja" required>
+        </div>
+        <div class="input-field">
+          <label>Ikon Emoji</label>
+          <select id="akun-icon">
+            <option value="💳">💳 Kartu/Bank</option>
+            <option value="🏦">🏦 Bank</option>
+            <option value="📱">📱 E-Wallet</option>
+            <option value="💵">💵 Cash</option>
+            <option value="💰">💰 Tabungan</option>
+            <option value="🌐">🌐 Online Pay</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-primary-gradient">Simpan Akun Baru</button>
+      </form>
+
+      <div class="accounts-grid" id="accounts-list">
+        <!-- Generasi Otomatis dari JS -->
+      </div>
     </section>
 
     <!-- Ringkasan Keuangan Grid -->
@@ -77,15 +125,62 @@
         <div class="stat-icon">⬇️</div>
         <div class="stat-details">
           <p>Pemasukan</p>
-          <h3 id="total-masuk">Rp 0</h3>
+          <h3 id="total-masuk">0</h3>
         </div>
       </div>
       <div class="card-stat expense">
         <div class="stat-icon">⬆️</div>
         <div class="stat-details">
           <p>Pengeluaran</p>
-          <h3 id="total-keluar">Rp 0</h3>
+          <h3 id="total-keluar">0</h3>
         </div>
+      </div>
+    </section>
+
+    <!-- FITUR BATAS MAKSIMAL PENGELUARAN BULANAN -->
+    <section class="content-box budget-box">
+      <div class="box-header between">
+        <h3>🎯 Batas Pengeluaran Bulanan</h3>
+        <button onclick="setMonthlyBudget()" class="btn-text">Atur Batas</button>
+      </div>
+      <div class="budget-progress-container">
+        <div class="budget-info">
+          <span id="budget-used-text">Terpakai: 0</span>
+          <span id="budget-limit-text">Batas: 0</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="budget-progress-bar" class="progress-bar-fill"></div>
+        </div>
+        <p id="budget-warning" class="budget-warning-text"></p>
+      </div>
+    </section>
+
+    <!-- FITUR TABUNGAN UNTUK MEMBELI SESUATU -->
+    <section class="content-box">
+      <div class="box-header between">
+        <h3>🎯 Target Tabungan & Impian</h3>
+        <button onclick="toggleSavingsForm()" class="btn-text">+ Target Baru</button>
+      </div>
+
+      <!-- Form Tambah Tabungan -->
+      <form id="form-tabungan" class="form-grid hidden" onsubmit="tambahTargetTabungan(event)">
+        <div class="input-field full">
+          <label>Nama Barang / Target Impian</label>
+          <input type="text" id="target-nama" placeholder="Contoh: Beli POCO M5 / Laptop" required>
+        </div>
+        <div class="input-field">
+          <label>Target Nominal</label>
+          <input type="number" id="target-nominal" placeholder="0" min="1" step="any" required>
+        </div>
+        <div class="input-field">
+          <label>Saldo Awal</label>
+          <input type="number" id="target-terkumpul" placeholder="0" min="0" step="any">
+        </div>
+        <button type="submit" class="btn-primary-gradient">Simpan Target</button>
+      </form>
+
+      <div id="savings-list" class="savings-container">
+        <!-- Ditampilkan via JavaScript -->
       </div>
     </section>
 
@@ -100,8 +195,8 @@
           <input type="text" id="deskripsi" placeholder="Contoh: Beli Kopi & Camilan" required>
         </div>
         <div class="input-field">
-          <label>Nominal (Rp)</label>
-          <input type="number" id="nominal" placeholder="0" min="1" required>
+          <label>Nominal</label>
+          <input type="number" id="nominal" placeholder="0" min="0.01" step="any" required>
         </div>
         <div class="input-field">
           <label>Jenis</label>
@@ -110,7 +205,11 @@
             <option value="masuk">🟢 Pemasukan</option>
           </select>
         </div>
-        <div class="input-field full">
+        <div class="input-field">
+          <label>Sumber Akun</label>
+          <select id="sumber-akun"></select>
+        </div>
+        <div class="input-field">
           <label>Kategori</label>
           <select id="kategori"></select>
         </div>
@@ -118,14 +217,13 @@
       </form>
     </section>
 
-    <!-- Riwayat Transaksi dengan Filter & Search -->
+    <!-- Riwayat Transaksi -->
     <section class="content-box">
       <div class="box-header between">
         <h3>📜 Riwayat Transaksi</h3>
         <span id="transaction-count" class="badge-count">0 Transaksi</span>
       </div>
 
-      <!-- Controls: Filter & Search -->
       <div class="filter-bar">
         <input type="text" id="search-input" onkeyup="filterTransactions()" placeholder="🔍 Cari transaksi...">
         <div class="filter-chips">
