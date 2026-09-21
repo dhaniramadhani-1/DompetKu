@@ -1,3 +1,25 @@
+// ==========================================
+// FITUR MATA UANG DINAMIS
+// ==========================================
+let currentSymbol = "Rp ";
+const currencySelect = document.getElementById("currency-select");
+
+// Fungsi Format Angka dengan Simbol Mata Uang
+function formatCurrency(amount) {
+  const number = parseFloat(amount) || 0;
+  return currentSymbol + number.toLocaleString("id-ID");
+}
+
+// Muat pilihan mata uang yang tersimpan dari browser
+function loadSavedCurrency() {
+  const savedCurrency = localStorage.getItem("user_currency");
+  if (savedCurrency && currencySelect) {
+    currencySelect.value = savedCurrency;
+    const [code, symbol] = savedCurrency.split("|");
+    currentSymbol = symbol;
+  }
+}
+
 // --- CONFIGURASI GOOGLE FIREBASE ---
 const firebaseConfig = {
   apiKey: "AIzaSyC5pL1W406iTsI3zlffPmAQ1hGWINvoaIM",
@@ -58,8 +80,8 @@ let currency = 'IDR';
 let budgetLimit = 0;
 let wallets = [
   { id: 'cash', nama: '💵 Tunai', saldo: 0 },
-  { id: 'bank', nama: '🏦 Bank/BCA', saldo: 0 },
-  { id: 'e-wallet', nama: '📱 GoPay/OVO', saldo: 0 }
+  { id: 'bank', nama: '🏦 Bank', saldo: 0 },
+  { id: 'e-wallet', nama: '📱 E-Wallet', saldo: 0 }
 ];
 let goals = [];
 let transaksi = [];
@@ -409,3 +431,24 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
   });
 }
+
+// Listener Saat Pengguna Mengubah Pilihan Mata Uang
+if (currencySelect) {
+  currencySelect.addEventListener("change", (e) => {
+    const selectedValue = e.target.value;
+    const [code, symbol] = selectedValue.split("|");
+    
+    currentSymbol = symbol;
+    localStorage.setItem("user_currency", selectedValue);
+    
+    // Perbarui tampilan UI secara otomatis jika fungsi update UI Anda sudah ada
+    if (typeof updateDashboardUI === "function") {
+      updateDashboardUI();
+    } else if (typeof renderTransactions === "function") {
+      renderTransactions();
+    }
+  });
+}
+
+// Jalankan pemuatan mata uang saat halaman dibuka
+loadSavedCurrency();
