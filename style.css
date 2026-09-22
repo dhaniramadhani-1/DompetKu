@@ -6,6 +6,7 @@
   --success: #10b981;
   --danger: #ef4444;
   --warning: #f59e0b;
+  --charity: #8b5cf6; /* Warna ungu khas untuk Amal */
   --text-main: #0f172a;
   --text-muted: #64748b;
   --border: #e2e8f0;
@@ -222,13 +223,16 @@ body {
 .badge-count { background: #f1f5f9; color: var(--text-muted); font-size: 0.7rem; font-weight: 600; padding: 4px 8px; border-radius: 8px; }
 body.dark-mode .badge-count { background: #334155; }
 
-/* BATAS MAKSIMAL PENGELUARAN */
+/* BATAS ANGGARAN & AMAL */
 .budget-progress-container { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
 .budget-info { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
 .progress-bar-bg { width: 100%; height: 10px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
 body.dark-mode .progress-bar-bg { background: #334155; }
 .progress-bar-fill { height: 100%; background: var(--success); width: 0%; transition: width 0.3s, background-color 0.3s; }
-.budget-warning-text { font-size: 0.72rem; color: var(--danger); font-weight: 600; margin-top: 2px; }
+.progress-bar-fill.charity-bar { background: var(--charity); }
+.budget-warning-text, .charity-status-text { font-size: 0.72rem; font-weight: 600; margin-top: 2px; }
+.budget-warning-text { color: var(--danger); }
+.charity-status-text { color: var(--charity); }
 
 /* TABUNGAN / TARGET IMPAN */
 .savings-container { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }

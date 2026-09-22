@@ -1,4 +1,4 @@
-// --- SISTEM LOCKSCREEN & KEYPAD & GOOGLE LOGIN ---
+// --- SISTEM LOCKSCREEN & KEYPAD & LOGIN PROFIL ---
 let currentPINInput = "";
 const savedPIN = localStorage.getItem('app_pin_code');
 
@@ -55,20 +55,20 @@ function submitPIN() {
 }
 
 function loginGoogle() {
-  const mockUser = {
-    name: "Dhani Ramadhani",
-    avatar: "https://lh3.googleusercontent.com/a/default-user=s96-c"
-  };
-  localStorage.setItem('app_google_user', 'true');
-  localStorage.setItem('user_profile_name', mockUser.name);
-  localStorage.setItem('user_profile_avatar', mockUser.avatar);
+  const inputNama = prompt("Masukkan nama Anda untuk profil:", localStorage.getItem('user_profile_name') || "Pengguna");
   
-  if (!localStorage.getItem('app_pin_code')) {
-    localStorage.setItem('app_pin_code', '123456');
-  }
+  if (inputNama && inputNama.trim() !== "") {
+    const userName = inputNama.trim();
+    localStorage.setItem('app_google_user', 'true');
+    localStorage.setItem('user_profile_name', userName);
+    
+    if (!localStorage.getItem('app_pin_code')) {
+      localStorage.setItem('app_pin_code', '123456');
+    }
 
-  alert(`Selamat datang kembali, ${mockUser.name}!`);
-  unlockApp();
+    alert(`Selamat datang, ${userName}!`);
+    unlockApp();
+  }
 }
 
 function unlockApp() {
@@ -86,12 +86,7 @@ function lockApp() {
 
 function loadUserProfile() {
   const userName = localStorage.getItem('user_profile_name') || 'Pengguna';
-  const userAvatar = localStorage.getItem('user_profile_avatar');
-
   document.getElementById('user-name').textContent = userName;
-  if (userAvatar) {
-    document.getElementById('user-avatar').innerHTML = `<img src="${userAvatar}" alt="Avatar">`;
-  }
 }
 
 // --- FITUR DARK MODE ---
@@ -136,10 +131,6 @@ function formatMataUang(angka) {
 // --- AKUN SAMA & CUSTOM AKUN ---
 const defaultAkun = [
   { id: 'cash', nama: 'Cash', icon: '💵' },
-  { id: 'bca', nama: 'BCA', icon: '🏦' },
-  { id: 'gopay', nama: 'GoPay', icon: '🟢' },
-  { id: 'ovo', nama: 'OVO', icon: '💜' },
-  { id: 'dana', nama: 'DANA', icon: '🔵' }
 ];
 
 let daftarAkun = JSON.parse(localStorage.getItem('keuangan_app_accounts')) || defaultAkun;
@@ -174,6 +165,7 @@ function hapusAkunCustom(id) {
 // --- LOGIKA UTAMA KEUANGAN ---
 const opsiKategori = {
   keluar: [
+    { nama: 'Amal & Sedekah', emoji: '🤲' },
     { nama: 'Makanan & Minuman', emoji: '🍕' },
     { nama: 'Tagihan & Belanja', emoji: '🛒' },
     { nama: 'Transportasi', emoji: '🚗' },
@@ -192,6 +184,7 @@ const opsiKategori = {
 let transaksi = JSON.parse(localStorage.getItem('keuangan_app_db')) || [];
 let targetTabungan = JSON.parse(localStorage.getItem('keuangan_app_savings')) || [];
 let batasPengeluaran = parseFloat(localStorage.getItem('keuangan_app_budget')) || 0;
+let targetAmalMingguan = parseFloat(localStorage.getItem('keuangan_app_charity_goal')) || 0;
 let activeFilter = 'all';
 
 const form = document.getElementById('form-transaksi');
@@ -228,16 +221,30 @@ function updateSelectAkunOptions() {
   });
 }
 
+function isWithinCurrentWeek(timestamp) {
+  const now = new Date();
+  const date = new Date(timestamp || Date.now());
+  
+  // Hitung awal minggu (Hari Senin)
+  const day = now.getDay();
+  const diffToMonday = now.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(now.setDate(diffToMonday));
+  monday.setHours(0, 0, 0, 0);
+
+  return date >= monday;
+}
+
 function updateUI() {
   updateSelectAkunOptions();
   daftarTransaksiEl.innerHTML = '';
   let totalMasuk = 0;
   let totalKeluar = 0;
+  let totalAmalMingguIni = 0;
 
   let saldoPerAkun = {};
   daftarAkun.forEach(a => saldoPerAkun[a.id] = 0);
 
-  // Hitung Saldo & Akun
+  // Hitung Saldo, Akun, dan Amal Mingguan
   transaksi.forEach(item => {
     const ak = item.akun || 'cash';
     if (saldoPerAkun[ak] === undefined) saldoPerAkun[ak] = 0;
@@ -248,6 +255,13 @@ function updateUI() {
     } else {
       totalKeluar += item.nominal;
       saldoPerAkun[ak] -= item.nominal;
+
+      // Hitung Amal jika termasuk dalam kategori 'Amal & Sedekah' di minggu ini
+      if (item.kategori.includes('Amal') || item.kategori.includes('Sedekah')) {
+        if (isWithinCurrentWeek(item.timestamp)) {
+          totalAmalMingguIni += item.nominal;
+        }
+      }
     }
   });
 
@@ -309,9 +323,48 @@ function updateUI() {
   transactionCountEl.textContent = `${transaksi.length} Transaksi`;
 
   updateBudgetUI(totalKeluar);
+  updateCharityUI(totalAmalMingguIni);
   renderSavings();
 
   localStorage.setItem('keuangan_app_db', JSON.stringify(transaksi));
+}
+
+// --- FITUR TARGET AMAL MINGGUAN ---
+function setWeeklyCharityGoal() {
+  const input = prompt(`Masukkan target minimal amal untuk seminggu (${currentCurrency}):`, targetAmalMingguan);
+  if (input !== null) {
+    targetAmalMingguan = parseFloat(input) || 0;
+    localStorage.setItem('keuangan_app_charity_goal', targetAmalMingguan);
+    updateUI();
+  }
+}
+
+function updateCharityUI(totalAmalMingguIni) {
+  const charityUsedEl = document.getElementById('charity-used-text');
+  const charityLimitEl = document.getElementById('charity-limit-text');
+  const progressBar = document.getElementById('charity-progress-bar');
+  const statusEl = document.getElementById('charity-status');
+
+  charityUsedEl.textContent = `Terkumpul: ${formatMataUang(totalAmalMingguIni)}`;
+  charityLimitEl.textContent = `Target: ${formatMataUang(targetAmalMingguan)}`;
+
+  if (targetAmalMingguan > 0) {
+    let persen = (totalAmalMingguIni / targetAmalMingguan) * 100;
+    progressBar.style.width = `${Math.min(persen, 100)}%`;
+
+    if (persen >= 100) {
+      statusEl.textContent = '🎉 Alhamdulillah! Target amal minggu ini telah tercapai.';
+      statusEl.style.color = 'var(--success)';
+    } else {
+      const kurang = targetAmalMingguan - totalAmalMingguIni;
+      statusEl.textContent = `💪 Kurang ${formatMataUang(kurang)} lagi untuk memenuhi target minggu ini.`;
+      statusEl.style.color = 'var(--charity)';
+    }
+  } else {
+    progressBar.style.width = '0%';
+    statusEl.textContent = 'Target amal mingguan belum diatur.';
+    statusEl.style.color = 'var(--text-muted)';
+  }
 }
 
 // --- BATAS MAKSIMAL PENGELUARAN ---
@@ -385,7 +438,8 @@ function nambahSaldoTabungan(idx) {
         tipe: 'keluar',
         akun: 'cash',
         kategori: '🎯 Tabungan Impian',
-        tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+        tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+        timestamp: Date.now()
       });
 
       localStorage.setItem('keuangan_app_savings', JSON.stringify(targetTabungan));
@@ -452,7 +506,8 @@ form.addEventListener('submit', (e) => {
     tipe: selectTipe.value,
     akun: selectAkun.value,
     kategori: selectKategori.value,
-    tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+    tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+    timestamp: Date.now()
   });
 
   updateUI();

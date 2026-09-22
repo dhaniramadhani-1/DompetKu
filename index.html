@@ -46,7 +46,7 @@
       <!-- FITUR LOGIN GOOGLE -->
       <button onclick="loginGoogle()" class="btn-google">
         <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width="18">
-        Masuk dengan Google
+        Masuk dengan Profil
       </button>
     </div>
   </div>
@@ -94,7 +94,7 @@
         <button onclick="toggleAccountForm()" class="btn-text">+ Tambah Akun</button>
       </div>
 
-      <!-- Form Tambah Akun / Bank Custom (Hidden default) -->
+      <!-- Form Tambah Akun Custom (Hidden default) -->
       <form id="form-akun" class="form-grid hidden" onsubmit="tambahAkunCustom(event)">
         <div class="input-field">
           <label>Nama Akun / Bank / E-Wallet</label>
@@ -134,6 +134,24 @@
           <p>Pengeluaran</p>
           <h3 id="total-keluar">0</h3>
         </div>
+      </div>
+    </section>
+
+    <!-- FITUR BARU: TARGET AMAL MINGGUAN -->
+    <section class="content-box charity-box">
+      <div class="box-header between">
+        <h3>🤲 Target Minimal Amal (Mingguan)</h3>
+        <button onclick="setWeeklyCharityGoal()" class="btn-text">Atur Target</button>
+      </div>
+      <div class="budget-progress-container">
+        <div class="budget-info">
+          <span id="charity-used-text">Terkumpul: 0</span>
+          <span id="charity-limit-text">Target: 0</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="charity-progress-bar" class="progress-bar-fill charity-bar"></div>
+        </div>
+        <p id="charity-status" class="charity-status-text"></p>
       </div>
     </section>
 
@@ -192,7 +210,7 @@
       <form id="form-transaksi" class="form-grid">
         <div class="input-field full">
           <label>Deskripsi Transaksi</label>
-          <input type="text" id="deskripsi" placeholder="Contoh: Beli Kopi & Camilan" required>
+          <input type="text" id="deskripsi" placeholder="Contoh: Bayar Tagihan Listrik" required>
         </div>
         <div class="input-field">
           <label>Nominal</label>
