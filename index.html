@@ -43,13 +43,12 @@
 
       <div class="divider"><span>atau</span></div>
 
-      <!-- FITUR LOGIN GOOGLE -->
-      <button onclick="loginGoogle()" class="btn-google">
-        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width="18">
-        Masuk dengan Profil
-      </button>
-    </div>
-  </div>
+      <!-- Cukup pastikan bagian ini di index.html memiliki ID btn-google-login -->
+<button id="btn-google-login" onclick="loginGoogle()" class="btn-google">
+  <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width="18">
+  Buat Profil Baru
+</button>
+
 
   <!-- HALAMAN UTAMA APLIKASI -->
   <div id="app-screen" class="app-container hidden">
@@ -210,7 +209,7 @@
       <form id="form-transaksi" class="form-grid">
         <div class="input-field full">
           <label>Deskripsi Transaksi</label>
-          <input type="text" id="deskripsi" placeholder="Contoh: Bayar Tagihan Listrik" required>
+          <input type="text" id="deskripsi" placeholder="Contoh: Sedekah Subuh / Infaq Masjid" required>
         </div>
         <div class="input-field">
           <label>Nominal</label>

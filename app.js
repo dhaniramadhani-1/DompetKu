@@ -1,18 +1,27 @@
 // --- SISTEM LOCKSCREEN & KEYPAD & LOGIN PROFIL ---
 let currentPINInput = "";
 const savedPIN = localStorage.getItem('app_pin_code');
+const hasProfile = localStorage.getItem('user_profile_name');
 
 const loginTitle = document.getElementById('login-title');
 const loginSubtitle = document.getElementById('login-subtitle');
 const lockCard = document.querySelector('.lockscreen-card');
 const dots = document.querySelectorAll('.dot');
+const btnGoogle = document.getElementById('btn-google-login');
 
-if (!savedPIN) {
-  loginTitle.textContent = "Buat PIN Baru";
-  loginSubtitle.textContent = "Masukkan 6 angka untuk keamanan";
-} else {
-  loginTitle.textContent = "Selamat Datang";
-  loginSubtitle.textContent = "Masukkan 6 angka PIN Anda";
+// Inisialisasi tampilan Lockscreen
+function initLockscreen() {
+  if (hasProfile) {
+    // Jika SUDAH PERNAH login/buat profil, sembunyikan tombol profil
+    if (btnGoogle) btnGoogle.style.display = 'none';
+    loginTitle.textContent = `Selamat Datang, ${hasProfile}`;
+    loginSubtitle.textContent = "Masukkan 6 angka PIN Anda";
+  } else {
+    // Jika BELUM PERNAH buat profil sama sekali
+    if (btnGoogle) btnGoogle.style.display = 'flex';
+    loginTitle.textContent = "Selamat Datang";
+    loginSubtitle.textContent = "Buat PIN & Profil Anda untuk memulai";
+  }
 }
 
 function pressKey(num) {
@@ -38,36 +47,58 @@ function updateDots() {
 function submitPIN() {
   if (currentPINInput.length < 6) return alert("PIN harus berisi 6 angka!");
 
-  if (!savedPIN) {
+  const currentSavedPIN = localStorage.getItem('app_pin_code');
+
+  // Jika PIN belum dibuat (pengguna baru)
+  if (!currentSavedPIN) {
     localStorage.setItem('app_pin_code', currentPINInput);
-    alert("PIN 6 Digit Berhasil dibuat!");
+    
+    // Minta nama jika belum ada profil
+    if (!localStorage.getItem('user_profile_name')) {
+      const nama = prompt("PIN berhasil dibuat! Masukkan Nama Profil Anda:", "Pengguna");
+      localStorage.setItem('user_profile_name', nama || "Pengguna");
+    }
+    
+    alert("PIN & Profil berhasil disimpan!");
     unlockApp();
   } else {
-    if (currentPINInput === savedPIN) {
+    // Verifikasi PIN untuk pengguna yang sudah terdaftar
+    if (currentPINInput === currentSavedPIN) {
       unlockApp();
     } else {
       lockCard.classList.add('shake');
       setTimeout(() => lockCard.classList.remove('shake'), 400);
+      alert("PIN Salah! Akses ditolak.");
       currentPINInput = "";
       updateDots();
     }
   }
 }
 
+// LOGICAL REVISION: Registrasi Profil Pertama Kali (Hanya 1x)
 function loginGoogle() {
-  const inputNama = prompt("Masukkan nama Anda untuk profil:", localStorage.getItem('user_profile_name') || "Pengguna");
+  // Jika profil sudah ada, paksa login pakai PIN saja
+  if (localStorage.getItem('user_profile_name')) {
+    alert("Profil sudah terdaftar! Silakan masukkan PIN 6-digit Anda untuk masuk.");
+    return;
+  }
+
+  const inputNama = prompt("Masukkan nama Anda untuk mendaftarkan profil:", "Pengguna");
   
   if (inputNama && inputNama.trim() !== "") {
     const userName = inputNama.trim();
-    localStorage.setItem('app_google_user', 'true');
     localStorage.setItem('user_profile_name', userName);
     
-    if (!localStorage.getItem('app_pin_code')) {
-      localStorage.setItem('app_pin_code', '123456');
+    // Meminta pembuatan PIN 6 digit pertama kali
+    const newPin = prompt("Buat 6-digit PIN Keamanan Anda:");
+    if (newPin && newPin.length === 6 && !isNaN(newPin)) {
+      localStorage.setItem('app_pin_code', newPin);
+      alert(`Profil berhasil dibuat! Selamat datang, ${userName}. Seterusnya Anda hanya perlu masuk menggunakan PIN ini.`);
+      unlockApp();
+    } else {
+      localStorage.removeItem('user_profile_name');
+      alert("Pembuatan profil dibatalkan. PIN harus berisi 6 angka.");
     }
-
-    alert(`Selamat datang, ${userName}!`);
-    unlockApp();
   }
 }
 
@@ -82,6 +113,9 @@ function unlockApp() {
 function lockApp() {
   document.getElementById('app-screen').classList.add('hidden');
   document.getElementById('login-screen').classList.remove('hidden');
+  currentPINInput = "";
+  updateDots();
+  initLockscreen(); // Refresh tampilan lockscreen
 }
 
 function loadUserProfile() {
@@ -131,6 +165,10 @@ function formatMataUang(angka) {
 // --- AKUN SAMA & CUSTOM AKUN ---
 const defaultAkun = [
   { id: 'cash', nama: 'Cash', icon: '💵' },
+  { id: 'bca', nama: 'BCA', icon: '🏦' },
+  { id: 'gopay', nama: 'GoPay', icon: '🟢' },
+  { id: 'ovo', nama: 'OVO', icon: '💜' },
+  { id: 'dana', nama: 'DANA', icon: '🔵' }
 ];
 
 let daftarAkun = JSON.parse(localStorage.getItem('keuangan_app_accounts')) || defaultAkun;
@@ -225,7 +263,6 @@ function isWithinCurrentWeek(timestamp) {
   const now = new Date();
   const date = new Date(timestamp || Date.now());
   
-  // Hitung awal minggu (Hari Senin)
   const day = now.getDay();
   const diffToMonday = now.getDate() - day + (day === 0 ? -6 : 1);
   const monday = new Date(now.setDate(diffToMonday));
@@ -244,7 +281,6 @@ function updateUI() {
   let saldoPerAkun = {};
   daftarAkun.forEach(a => saldoPerAkun[a.id] = 0);
 
-  // Hitung Saldo, Akun, dan Amal Mingguan
   transaksi.forEach(item => {
     const ak = item.akun || 'cash';
     if (saldoPerAkun[ak] === undefined) saldoPerAkun[ak] = 0;
@@ -256,7 +292,6 @@ function updateUI() {
       totalKeluar += item.nominal;
       saldoPerAkun[ak] -= item.nominal;
 
-      // Hitung Amal jika termasuk dalam kategori 'Amal & Sedekah' di minggu ini
       if (item.kategori.includes('Amal') || item.kategori.includes('Sedekah')) {
         if (isWithinCurrentWeek(item.timestamp)) {
           totalAmalMingguIni += item.nominal;
@@ -265,7 +300,6 @@ function updateUI() {
     }
   });
 
-  // Render Kartu Akun
   const accountsListEl = document.getElementById('accounts-list');
   accountsListEl.innerHTML = '';
   daftarAkun.forEach(ak => {
@@ -280,7 +314,6 @@ function updateUI() {
     accountsListEl.appendChild(div);
   });
 
-  // Render Transaksi Ter-filter
   const searchKeyword = document.getElementById('search-input').value.toLowerCase();
   const filteredData = transaksi.filter(item => {
     const matchFilter = activeFilter === 'all' || item.tipe === activeFilter;
@@ -534,6 +567,8 @@ function eksporKeCSV() {
   a.click();
 }
 
+// Jalankan pemeriksaan lockscreen awal saat dibuka
+initLockscreen();
 selectTipe.addEventListener('change', updateKategoriOptions);
 updateKategoriOptions();
 updateUI();
