@@ -5,6 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Aplikasi Keuangan Modern 💰</title>
   <link rel="stylesheet" href="style.css">
+  <!-- Hubungkan Manifest PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Keuangan">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2845/2845701.png">
+
+<!-- Script Registrasi Service Worker -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(() => console.log('✅ Service Worker Berhasil Terdaftar!'))
+        .catch((err) => console.log('❌ Service Worker Gagal:', err));
+    });
+  }
+</script>
 </head>
 <body>
 
