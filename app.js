@@ -2,15 +2,15 @@
 // 1. KONFIGURASI & INISIALISASI FIREBASE
 // ==========================================
 const firebaseConfig = {
-  apiKey: "AIzaSyBbHgm3qCiO3sh4proJZq3Ko0I_lcyHq18",
-  authDomain: "app-keuangan-saya.firebaseapp.com",
-  databaseURL: "https://app-keuangan-saya-default-rtdb.firebaseio.com",
-  projectId: "app-keuangan-saya",
-  storageBucket: "app-keuangan-saya.firebasestorage.app",
-  messagingSenderId: "549726252154",
-  appId: "1:549726252154:web:3b8989f0ee3ea8b42bdfc3",
-  measurementId: "G-V1ZJFZK6YX"
+  apiKey: "AIzaSyC1ixEgcTmVK78P2ImKJpk9TynUadt69C8",
+  authDomain: "app-keuangan-saya-57a1c.firebaseapp.com",
+  databaseURL: "https://app-keuangan-saya-57a1c-default-rtdb.firebaseio.com",
+  projectId: "app-keuangan-saya-57a1c",
+  storageBucket: "app-keuangan-saya-57a1c.firebasestorage.app",
+  messagingSenderId: "323890070054",
+  appId: "1:323890070054:web:890be0ebfea1afdef71ce7"
 };
+
 
 let db = null;
 let isFirebaseReady = false;
@@ -522,6 +522,7 @@ function updateKategoriOptions() {
       <option value="Bonus">🎁 Bonus & Hadiah</option>
       <option value="Investasi">📈 Hasil Investasi</option>
       <option value="Sampingan">⚡ Usaha Sampingan</option>
+      <option value="Lainnya">💰 Lainnya...</option>
     `;
   } else {
     kategoriSelect.innerHTML = `
@@ -531,6 +532,7 @@ function updateKategoriOptions() {
       <option value="Tagihan">📄 Tagihan & Bulanan</option>
       <option value="Amal">🤲 Sedekah & Amal</option>
       <option value="Hiburan">🎮 Hiburan & Liburan</option>
+      <option value="Lainnya">💰 Lainnya...</option>
     `;
   }
 }
@@ -589,17 +591,23 @@ function renderTransactions(data) {
     return;
   }
 
-  listElem.innerHTML = items.map(t => `
-    <li style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-      <div>
-        <strong>${t.deskripsi}</strong> <small style="opacity:0.8;">(${t.kategori})</small><br>
-        <small style="color:#94a3b8;">${t.akunNama} • ${t.tanggal}</small>
-      </div>
-      <span style="color: ${t.tipe === 'masuk' ? '#10b981' : '#ef4444'}; font-weight: bold;">
-        ${t.tipe === 'masuk' ? '+' : '-'} Rp ${t.nominal.toLocaleString('id-ID')}
-      </span>
-    </li>
-  `).join('');
+  listElem.innerHTML = items.map(t => {
+    // Ambil emoji berdasarkan kategori transaksi
+    const categoryIcon = getCategoryIcon(t.kategori);
+
+    return `
+      <li style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <!-- Menampilkan Emoji + Deskripsi + (Kategori) -->
+          <strong>${categoryIcon} ${t.deskripsi}</strong> <small style="opacity:0.8;">(${t.kategori})</small><br>
+          <small style="color:#94a3b8;">${t.akunNama} • ${t.tanggal}</small>
+        </div>
+        <span style="color: ${t.tipe === 'masuk' ? '#10b981' : '#ef4444'}; font-weight: bold;">
+          ${t.tipe === 'masuk' ? '+' : '-'} Rp ${t.nominal.toLocaleString('id-ID')}
+        </span>
+      </li>
+    `;
+  }).join('');
 }
 
 function eksporKeCSV() {
@@ -692,3 +700,26 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('form-akun')?.addEventListener('submit', tambahAkunCustom);
   document.getElementById('form-tabungan')?.addEventListener('submit', tambahTargetTabungan);
 });
+
+// Fungsi untuk mengambil emoji berdasarkan nama kategori
+function getCategoryIcon(kategori) {
+  const icons = {
+    // Kategori Pemasukan
+    'Gaji': '💼',
+    'Bonus': '🎁',
+    'Investasi': '📈',
+    'Sampingan': '⚡',
+    'Lainnya': '💡',
+    
+    // Kategori Pengeluaran
+    'Makanan': '🍔',
+    'Transport': '🚗',
+    'Belanja': '🛍️',
+    'Tagihan': '📄',
+    'Amal': '🤲',
+    'Hiburan': '🎮'
+  };
+
+  // Jika kategori ditemukan gunakan emojinya, jika tidak gunakan emoji default 🏷️
+  return icons[kategori] || '🏷️';
+}
