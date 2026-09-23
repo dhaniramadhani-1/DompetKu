@@ -3,32 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Aplikasi Keuangan Modern</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#2563eb">
+  <title>Aplikasi Keuangan Modern 💰</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- LAYER LOCKSCREEN / LOGIN -->
+  <!-- LAYAR LOCKSCREEN / LOGIN -->
   <div id="login-screen" class="lockscreen-overlay">
     <div class="lockscreen-card">
       <div class="lockscreen-header">
-        <div class="app-icon">💳</div>
-        <h2 id="login-title">Selamat Datang</h2>
-        <p id="login-subtitle">Masukkan PIN 6 angka Anda</p>
+        <div class="app-icon">🔐</div>
+        <h2 id="login-title">Selamat Datang 👋</h2>
+        <p id="login-subtitle">Klik 'Masuk / Ganti Akun Lain' untuk memilih akun 👤</p>
+      </div>
+
+      <!-- Indikator PIN -->
+      <div class="pin-display">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
       </div>
 
       <!-- Keypad PIN -->
-      <div class="pin-display">
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-      </div>
-
       <div class="keypad">
         <button onclick="pressKey('1')">1</button>
         <button onclick="pressKey('2')">2</button>
@@ -46,14 +45,14 @@
 
       <div class="login-divider"></div>
 
-      <button id="btn-google-login" onclick="loginGoogle()" class="btn-google">
-        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width="18">
-        Buat Profil Baru
+      <!-- Tombol Masuk / Ganti Akun -->
+      <button id="btn-google-login" onclick="loginGoogle()" class="btn-google" style="margin-top: 15px; width: 100%;">
+        👤 Masuk / Ganti Akun Lain
       </button>
     </div>
   </div>
 
-  <!-- UTAMA / DASHBOARD APLIKASI -->
+  <!-- DASHBOARD UTAMA -->
   <div id="app-screen" class="app-container hidden">
     
     <!-- Header -->
@@ -61,58 +60,56 @@
       <div class="user-profile">
         <img src="diamond.jpg" alt="Profile" class="avatar-img">
         <div>
-          <h3 id="user-name">Pengguna</h3>
-          <small>Akun Pribadi</small>
+          <h3 id="user-name">Pengguna 🌟</h3>
+          <small>Dompet Personal 💳</small>
         </div>
       </div>
       <div class="header-actions">
         <select id="currency-selector" onchange="changeCurrency(this.value)" class="currency-select">
-          <option value="IDR">IDR (Rp)</option>
-          <option value="USD">USD ($)</option>
-          <option value="EUR">EUR (€)</option>
-          <option value="JPY">JPY (¥)</option>
-          <option value="MYR">MYR (RM)</option>
-          <option value="SGD">SGD ($)</option>
+          <option value="IDR">IDR (Rp) 🇮🇩</option>
+          <option value="USD">USD ($) 🇺🇸</option>
+          <option value="EUR">EUR (€) 🇪🇺</option>
+          <option value="JPY">JPY (¥) 🇯🇵</option>
         </select>
         <button onclick="toggleDarkMode()" class="btn-icon" title="Mode Gelap/Terang">🌙</button>
-        <button onclick="lockApp()" class="btn-icon" title="Kunci Aplikasi">🔒</button>
+        <button onclick="lockApp()" class="btn-icon btn-logout" title="Keluar / Logout">🚪 Logout</button>
       </div>
     </header>
 
     <!-- Ringkasan Saldo -->
     <section class="summary-card">
-      <div class="balance-title">TOTAL SALDO</div>
+      <div class="balance-title">💎 TOTAL SALDO UTAMA</div>
       <div id="sisa-saldo" class="balance-amount">Rp 0</div>
 
       <div class="summary-details">
         <div class="summary-box">
-          <span>Pemasukan</span>
+          <span>📈 Pemasukan</span>
           <strong id="total-masuk">Rp 0</strong>
         </div>
         <div class="summary-box">
-          <span>Pengeluaran</span>
+          <span>📉 Pengeluaran</span>
           <strong id="total-keluar">Rp 0</strong>
         </div>
       </div>
     </section>
 
-    <!-- Manajemen Akun Keuangan -->
+    <!-- Sumber Akun -->
     <section class="section-card">
       <div class="section-header">
-        <h3>Sumber Akun</h3>
-        <button onclick="toggleAccountForm()" class="btn-text">+ Tambah</button>
+        <h3>🏦 Sumber Akun / Dompet</h3>
+        <button onclick="toggleAccountForm()" class="btn-text">➕ Tambah</button>
       </div>
 
       <form id="form-akun" class="account-form hidden" onsubmit="tambahAkunCustom(event)">
-        <input type="text" id="akun-nama" placeholder="Nama Akun (misal: Bank Jago)" required>
+        <input type="text" id="akun-nama" placeholder="Nama Akun (misal: Bank BCA)" required>
         <select id="akun-icon">
           <option value="💳">💳 Kartu/Bank</option>
-          <option value="📱">📱 E-Wallet</option>
-          <option value="🏦">🏦 Bank</option>
-          <option value="💵">💵 Tunai</option>
-          <option value="🐷">🐷 Tabungan</option>
+          <option value="📱">📱 E-Wallet / QRIS</option>
+          <option value="🏦">🏦 Bank Utama</option>
+          <option value="💵">💵 Tunai / Cash</option>
+          <option value="🐷">🐷 Celengan</option>
         </select>
-        <button type="submit" class="btn-primary">Simpan Akun</button>
+        <button type="submit" class="btn-primary">✨ Simpan Akun</button>
       </form>
 
       <div id="accounts-list" class="accounts-grid"></div>
@@ -122,91 +119,89 @@
     <section class="section-card">
       <div class="section-header">
         <h3>🤲 Target Amal Mingguan</h3>
-        <button onclick="setWeeklyCharityGoal()" class="btn-text">Atur Target</button>
+        <button onclick="setWeeklyCharityGoal()" class="btn-text">⚙️ Atur Target</button>
       </div>
       <div class="budget-info">
-        <span id="charity-used-text">Terkumpul: Rp 0</span>
-        <span id="charity-limit-text">Target: Rp 0</span>
+        <span id="charity-used-text">✨ Terkumpul: Rp 0</span>
+        <span id="charity-limit-text">🎯 Target: Rp 0</span>
       </div>
       <div class="progress-bar-bg">
         <div id="charity-progress-bar" class="progress-bar-fill charity-fill" style="width: 0%;"></div>
       </div>
-      <p id="charity-status" class="budget-warning-text"></p>
     </section>
 
-    <!-- Batas Pengeluaran Bulanan -->
+    <!-- Batas Pengeluaran -->
     <section class="section-card">
       <div class="section-header">
-        <h3>📊 Batas Pengeluaran</h3>
-        <button onclick="setMonthlyBudget()" class="btn-text">Atur Batas</button>
+        <h3>📊 Batas Pengeluaran Bulanan</h3>
+        <button onclick="setMonthlyBudget()" class="btn-text">⚙️ Atur Batas</button>
       </div>
       <div class="budget-info">
-        <span id="budget-used-text">Terpakai: Rp 0</span>
-        <span id="budget-limit-text">Batas: Rp 0</span>
+        <span id="budget-used-text">💸 Terpakai: Rp 0</span>
+        <span id="budget-limit-text">❗❗❗ Batas: Rp 0</span>
       </div>
       <div class="progress-bar-bg">
         <div id="budget-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
       </div>
-      <p id="budget-warning" class="budget-warning-text"></p>
     </section>
 
-    <!-- Target Impian & Tabungan -->
+    <!-- Target Impian (FIXED) -->
     <section class="section-card">
       <div class="section-header">
-        <h3>🎯 Target Impian</h3>
-        <button onclick="toggleSavingsForm()" class="btn-text">+ Tambah Target</button>
+        <h3>🎯 Target Impian & Tabungan</h3>
+        <button onclick="toggleSavingsForm()" class="btn-text">➕ Tambah Target</button>
       </div>
 
       <form id="form-tabungan" class="account-form hidden" onsubmit="tambahTargetTabungan(event)">
-        <input type="text" id="target-nama" placeholder="Nama Barang (misal: Laptop)" required>
-        <input type="number" id="target-nominal" placeholder="Harga Target" required>
-        <input type="number" id="target-terkumpul" placeholder="Modal Awal (Opsional)">
-        <button type="submit" class="btn-primary">Simpan Target</button>
+        <input type="text" id="target-nama" placeholder="🎁 Nama Impian (misal: Laptop Baru)" required>
+        <input type="number" id="target-nominal" placeholder="💰 Harga Target (Rp)" required>
+        <input type="number" id="target-terkumpul" placeholder="💵 Modal Awal (Rp - Opsional)">
+        <button type="submit" class="btn-primary">🚀 Simpan Target Impian</button>
       </form>
 
-      <div id="savings-list" class="savings-container"></div>
+      <div id="savings-list" class="savings-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;"></div>
     </section>
 
-    <!-- Form Transaksi Baru -->
+    <!-- Transaksi Baru -->
     <section class="section-card">
-      <h3 style="margin-bottom: 8px;">Tambah Transaksi</h3>
+      <h3 style="margin-bottom: 8px;">📝 Catat Transaksi Baru</h3>
       <form id="form-transaksi" class="transaction-form">
-        <input type="text" id="deskripsi" placeholder="Keterangan (misal: Beli Kopi)" required>
+        <input type="text" id="deskripsi" placeholder="📌 Keterangan (misal: Beli Kopi Boba)" required>
         <div class="form-row">
-          <input type="number" id="nominal" placeholder="Nominal" required>
+          <input type="number" id="nominal" placeholder="💵 Nominal (Rp)" required>
           <select id="tipe" onchange="updateKategoriOptions()">
-            <option value="keluar">Pengeluaran</option>
-            <option value="masuk">Pemasukan</option>
+            <option value="keluar">🔴 Pengeluaran</option>
+            <option value="masuk">🟢 Pemasukan</option>
           </select>
         </div>
         <div class="form-row">
           <select id="sumber-akun"></select>
           <select id="kategori"></select>
         </div>
-        <button type="submit" class="btn-primary btn-block">Catat Transaksi</button>
+        <button type="submit" class="btn-primary btn-block">⚡ Catat Transaksi SEKARANG</button>
       </form>
     </section>
 
     <!-- Riwayat Transaksi -->
     <section class="section-card">
       <div class="section-header">
-        <h3>Riwayat Transaksi</h3>
+        <h3>📜 Riwayat Transaksi</h3>
         <span id="transaction-count" class="badge">0 Transaksi</span>
       </div>
 
       <div class="filter-controls">
         <input type="text" id="search-input" placeholder="🔍 Cari transaksi..." onkeyup="filterTransactions()">
         <div class="chip-group">
-          <button class="chip active" onclick="setFilter('all', this)">Semua</button>
-          <button class="chip" onclick="setFilter('masuk', this)">Masuk</button>
-          <button class="chip" onclick="setFilter('keluar', this)">Keluar</button>
+          <button class="chip active" onclick="setFilter('all', this)">🌐 Semua</button>
+          <button class="chip" onclick="setFilter('masuk', this)">🟢 Masuk</button>
+          <button class="chip" onclick="setFilter('keluar', this)">🔴 Keluar</button>
         </div>
       </div>
 
       <ul id="daftar-transaksi" class="history-list"></ul>
 
       <button onclick="eksporKeCSV()" class="btn-secondary btn-block" style="margin-top: 16px;">
-        📥 Ekspor Data ke CSV
+        📥 Ekspor Data ke CSV Excel
       </button>
     </section>
 
