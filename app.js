@@ -1,26 +1,26 @@
-// --- SISTEM LOCKSCREEN & KEYPAD & LOGIN PROFIL ---
 let currentPINInput = "";
-const savedPIN = localStorage.getItem('app_pin_code');
-const hasProfile = localStorage.getItem('user_profile_name');
 
-const loginTitle = document.getElementById('login-title');
-const loginSubtitle = document.getElementById('login-subtitle');
-const lockCard = document.querySelector('.lockscreen-card');
-const dots = document.querySelectorAll('.dot');
-const btnGoogle = document.getElementById('btn-google-login');
-
-// Inisialisasi tampilan Lockscreen
+// Inisialisasi Tampilan Lockscreen
 function initLockscreen() {
-  if (hasProfile) {
-    // Jika SUDAH PERNAH login/buat profil, sembunyikan tombol profil
+  const loginScreen = document.getElementById('login-screen');
+  const appScreen = document.getElementById('app-screen');
+  const loginTitle = document.getElementById('login-title');
+  const loginSubtitle = document.getElementById('login-subtitle');
+  const btnGoogle = document.getElementById('btn-google-login');
+
+  const currentProfile = localStorage.getItem('user_profile_name');
+  
+  loginScreen.classList.remove('hidden');
+  appScreen.classList.add('hidden');
+
+  if (currentProfile) {
     if (btnGoogle) btnGoogle.style.display = 'none';
-    loginTitle.textContent = `Selamat Datang, ${hasProfile}`;
-    loginSubtitle.textContent = "Masukkan 6 angka PIN Anda";
+    if (loginTitle) loginTitle.textContent = `Selamat Datang, ${currentProfile}`;
+    if (loginSubtitle) loginSubtitle.textContent = "Masukkan 6 angka PIN Anda";
   } else {
-    // Jika BELUM PERNAH buat profil sama sekali
     if (btnGoogle) btnGoogle.style.display = 'flex';
-    loginTitle.textContent = "Selamat Datang";
-    loginSubtitle.textContent = "Buat PIN & Profil Anda untuk memulai";
+    if (loginTitle) loginTitle.textContent = "Selamat Datang";
+    if (loginSubtitle) loginSubtitle.textContent = "Buat PIN & Profil Anda untuk memulai";
   }
 }
 
@@ -38,6 +38,7 @@ function clearKey() {
 }
 
 function updateDots() {
+  const dots = document.querySelectorAll('.dot');
   dots.forEach((dot, idx) => {
     if (idx < currentPINInput.length) dot.classList.add('active');
     else dot.classList.remove('active');
@@ -49,25 +50,23 @@ function submitPIN() {
 
   const currentSavedPIN = localStorage.getItem('app_pin_code');
 
-  // Jika PIN belum dibuat (pengguna baru)
   if (!currentSavedPIN) {
     localStorage.setItem('app_pin_code', currentPINInput);
-    
-    // Minta nama jika belum ada profil
     if (!localStorage.getItem('user_profile_name')) {
       const nama = prompt("PIN berhasil dibuat! Masukkan Nama Profil Anda:", "Pengguna");
       localStorage.setItem('user_profile_name', nama || "Pengguna");
     }
-    
     alert("PIN & Profil berhasil disimpan!");
     unlockApp();
   } else {
-    // Verifikasi PIN untuk pengguna yang sudah terdaftar
     if (currentPINInput === currentSavedPIN) {
       unlockApp();
     } else {
-      lockCard.classList.add('shake');
-      setTimeout(() => lockCard.classList.remove('shake'), 400);
+      const lockCard = document.querySelector('.lockscreen-card');
+      if (lockCard) {
+        lockCard.classList.add('shake');
+        setTimeout(() => lockCard.classList.remove('shake'), 400);
+      }
       alert("PIN Salah! Akses ditolak.");
       currentPINInput = "";
       updateDots();
@@ -75,25 +74,21 @@ function submitPIN() {
   }
 }
 
-// LOGICAL REVISION: Registrasi Profil Pertama Kali (Hanya 1x)
 function loginGoogle() {
-  // Jika profil sudah ada, paksa login pakai PIN saja
   if (localStorage.getItem('user_profile_name')) {
     alert("Profil sudah terdaftar! Silakan masukkan PIN 6-digit Anda untuk masuk.");
     return;
   }
 
   const inputNama = prompt("Masukkan nama Anda untuk mendaftarkan profil:", "Pengguna");
-  
   if (inputNama && inputNama.trim() !== "") {
     const userName = inputNama.trim();
     localStorage.setItem('user_profile_name', userName);
     
-    // Meminta pembuatan PIN 6 digit pertama kali
     const newPin = prompt("Buat 6-digit PIN Keamanan Anda:");
     if (newPin && newPin.length === 6 && !isNaN(newPin)) {
       localStorage.setItem('app_pin_code', newPin);
-      alert(`Profil berhasil dibuat! Selamat datang, ${userName}. Seterusnya Anda hanya perlu masuk menggunakan PIN ini.`);
+      alert(`Profil berhasil dibuat! Selamat datang, ${userName}.`);
       unlockApp();
     } else {
       localStorage.removeItem('user_profile_name');
@@ -108,33 +103,32 @@ function unlockApp() {
   currentPINInput = "";
   updateDots();
   loadUserProfile();
+  updateUI();
 }
 
 function lockApp() {
-  document.getElementById('app-screen').classList.add('hidden');
-  document.getElementById('login-screen').classList.remove('hidden');
   currentPINInput = "";
   updateDots();
-  initLockscreen(); // Refresh tampilan lockscreen
+  initLockscreen();
 }
 
 function loadUserProfile() {
   const userName = localStorage.getItem('user_profile_name') || 'Pengguna';
-  document.getElementById('user-name').textContent = userName;
+  const nameEl = document.getElementById('user-name');
+  if (nameEl) nameEl.textContent = userName;
 }
 
-// --- FITUR DARK MODE ---
+// --- DARK MODE ---
 function toggleDarkMode() {
   document.body.classList.toggle('dark-mode');
-  const isDark = document.body.classList.contains('dark-mode');
-  localStorage.setItem('app_dark_mode', isDark);
+  localStorage.setItem('app_dark_mode', document.body.classList.contains('dark-mode'));
 }
 
 if (localStorage.getItem('app_dark_mode') === 'true') {
   document.body.classList.add('dark-mode');
 }
 
-// --- FITUR MULTI-CURRENCY (MATA UANG) ---
+// --- MATA UANG ---
 const currencyFormats = {
   IDR: { locale: 'id-ID', currency: 'IDR' },
   USD: { locale: 'en-US', currency: 'USD' },
@@ -145,7 +139,6 @@ const currencyFormats = {
 };
 
 let currentCurrency = localStorage.getItem('app_currency') || 'IDR';
-document.getElementById('currency-selector').value = currentCurrency;
 
 function changeCurrency(val) {
   currentCurrency = val;
@@ -162,7 +155,7 @@ function formatMataUang(angka) {
   }).format(angka);
 }
 
-// --- AKUN SAMA & CUSTOM AKUN ---
+// --- AKUN & DATA ---
 const defaultAkun = [
   { id: 'cash', nama: 'Cash', icon: '💵' },
   { id: 'bca', nama: 'BCA', icon: '🏦' },
@@ -200,7 +193,7 @@ function hapusAkunCustom(id) {
   }
 }
 
-// --- LOGIKA UTAMA KEUANGAN ---
+// --- KATEGORI & TRANSAKSI ---
 const opsiKategori = {
   keluar: [
     { nama: 'Amal & Sedekah', emoji: '🤲' },
@@ -225,20 +218,11 @@ let batasPengeluaran = parseFloat(localStorage.getItem('keuangan_app_budget')) |
 let targetAmalMingguan = parseFloat(localStorage.getItem('keuangan_app_charity_goal')) || 0;
 let activeFilter = 'all';
 
-const form = document.getElementById('form-transaksi');
-const inputDeskripsi = document.getElementById('deskripsi');
-const inputNominal = document.getElementById('nominal');
-const selectTipe = document.getElementById('tipe');
-const selectAkun = document.getElementById('sumber-akun');
-const selectKategori = document.getElementById('kategori');
-
-const totalMasukEl = document.getElementById('total-masuk');
-const totalKeluarEl = document.getElementById('total-keluar');
-const sisaSaldoEl = document.getElementById('sisa-saldo');
-const daftarTransaksiEl = document.getElementById('daftar-transaksi');
-const transactionCountEl = document.getElementById('transaction-count');
-
 function updateKategoriOptions() {
+  const selectTipe = document.getElementById('tipe');
+  const selectKategori = document.getElementById('kategori');
+  if (!selectTipe || !selectKategori) return;
+
   const tipe = selectTipe.value;
   selectKategori.innerHTML = '';
   opsiKategori[tipe].forEach(item => {
@@ -250,6 +234,8 @@ function updateKategoriOptions() {
 }
 
 function updateSelectAkunOptions() {
+  const selectAkun = document.getElementById('sumber-akun');
+  if (!selectAkun) return;
   selectAkun.innerHTML = '';
   daftarAkun.forEach(ak => {
     const option = document.createElement('option');
@@ -262,17 +248,19 @@ function updateSelectAkunOptions() {
 function isWithinCurrentWeek(timestamp) {
   const now = new Date();
   const date = new Date(timestamp || Date.now());
-  
   const day = now.getDay();
   const diffToMonday = now.getDate() - day + (day === 0 ? -6 : 1);
   const monday = new Date(now.setDate(diffToMonday));
   monday.setHours(0, 0, 0, 0);
-
   return date >= monday;
 }
 
 function updateUI() {
   updateSelectAkunOptions();
+  
+  const daftarTransaksiEl = document.getElementById('daftar-transaksi');
+  if (!daftarTransaksiEl) return;
+  
   daftarTransaksiEl.innerHTML = '';
   let totalMasuk = 0;
   let totalKeluar = 0;
@@ -292,7 +280,7 @@ function updateUI() {
       totalKeluar += item.nominal;
       saldoPerAkun[ak] -= item.nominal;
 
-      if (item.kategori.includes('Amal') || item.kategori.includes('Sedekah')) {
+      if (item.kategori && (item.kategori.includes('Amal') || item.kategori.includes('Sedekah'))) {
         if (isWithinCurrentWeek(item.timestamp)) {
           totalAmalMingguIni += item.nominal;
         }
@@ -301,20 +289,24 @@ function updateUI() {
   });
 
   const accountsListEl = document.getElementById('accounts-list');
-  accountsListEl.innerHTML = '';
-  daftarAkun.forEach(ak => {
-    const div = document.createElement('div');
-    div.className = 'account-card';
-    div.innerHTML = `
-      ${ak.isCustom ? `<button onclick="hapusAkunCustom('${ak.id}')" class="btn-del-account">✕</button>` : ''}
-      <div class="icon">${ak.icon}</div>
-      <div class="name">${ak.nama}</div>
-      <div class="bal">${formatMataUang(saldoPerAkun[ak.id] || 0)}</div>
-    `;
-    accountsListEl.appendChild(div);
-  });
+  if (accountsListEl) {
+    accountsListEl.innerHTML = '';
+    daftarAkun.forEach(ak => {
+      const div = document.createElement('div');
+      div.className = 'account-card';
+      div.innerHTML = `
+        ${ak.isCustom ? `<button onclick="hapusAkunCustom('${ak.id}')" class="btn-del-account">✕</button>` : ''}
+        <div class="icon">${ak.icon}</div>
+        <div class="name">${ak.nama}</div>
+        <div class="bal">${formatMataUang(saldoPerAkun[ak.id] || 0)}</div>
+      `;
+      accountsListEl.appendChild(div);
+    });
+  }
 
-  const searchKeyword = document.getElementById('search-input').value.toLowerCase();
+  const searchInput = document.getElementById('search-input');
+  const searchKeyword = searchInput ? searchInput.value.toLowerCase() : '';
+  
   const filteredData = transaksi.filter(item => {
     const matchFilter = activeFilter === 'all' || item.tipe === activeFilter;
     const matchSearch = item.deskripsi.toLowerCase().includes(searchKeyword) || item.kategori.toLowerCase().includes(searchKeyword);
@@ -333,10 +325,10 @@ function updateUI() {
 
       li.innerHTML = `
         <div class="item-info">
-          <div class="item-icon">${item.kategori.split(' ')[0]}</div>
+          <div class="item-icon">${item.kategori ? item.kategori.split(' ')[0] : '💰'}</div>
           <div class="item-details">
             <h4>${item.deskripsi}</h4>
-            <p>${item.kategori.substring(2)} • ${akObj.nama} • ${item.tanggal}</p>
+            <p>${item.kategori ? item.kategori.substring(2) : ''} • ${akObj.nama} • ${item.tanggal}</p>
           </div>
         </div>
         <div class="item-right">
@@ -350,10 +342,10 @@ function updateUI() {
     });
   }
 
-  totalMasukEl.textContent = formatMataUang(totalMasuk);
-  totalKeluarEl.textContent = formatMataUang(totalKeluar);
-  sisaSaldoEl.textContent = formatMataUang(totalMasuk - totalKeluar);
-  transactionCountEl.textContent = `${transaksi.length} Transaksi`;
+  document.getElementById('total-masuk').textContent = formatMataUang(totalMasuk);
+  document.getElementById('total-keluar').textContent = formatMataUang(totalKeluar);
+  document.getElementById('sisa-saldo').textContent = formatMataUang(totalMasuk - totalKeluar);
+  document.getElementById('transaction-count').textContent = `${transaksi.length} Transaksi`;
 
   updateBudgetUI(totalKeluar);
   updateCharityUI(totalAmalMingguIni);
@@ -362,7 +354,6 @@ function updateUI() {
   localStorage.setItem('keuangan_app_db', JSON.stringify(transaksi));
 }
 
-// --- FITUR TARGET AMAL MINGGUAN ---
 function setWeeklyCharityGoal() {
   const input = prompt(`Masukkan target minimal amal untuk seminggu (${currentCurrency}):`, targetAmalMingguan);
   if (input !== null) {
@@ -377,6 +368,8 @@ function updateCharityUI(totalAmalMingguIni) {
   const charityLimitEl = document.getElementById('charity-limit-text');
   const progressBar = document.getElementById('charity-progress-bar');
   const statusEl = document.getElementById('charity-status');
+
+  if (!charityUsedEl) return;
 
   charityUsedEl.textContent = `Terkumpul: ${formatMataUang(totalAmalMingguIni)}`;
   charityLimitEl.textContent = `Target: ${formatMataUang(targetAmalMingguan)}`;
@@ -400,7 +393,6 @@ function updateCharityUI(totalAmalMingguIni) {
   }
 }
 
-// --- BATAS MAKSIMAL PENGELUARAN ---
 function setMonthlyBudget() {
   const input = prompt(`Masukkan batas pengeluaran bulan ini (${currentCurrency}):`, batasPengeluaran);
   if (input !== null) {
@@ -415,6 +407,8 @@ function updateBudgetUI(totalPengeluaran) {
   const budgetLimitEl = document.getElementById('budget-limit-text');
   const progressBar = document.getElementById('budget-progress-bar');
   const warningEl = document.getElementById('budget-warning');
+
+  if (!budgetUsedEl) return;
 
   budgetUsedEl.textContent = `Terpakai: ${formatMataUang(totalPengeluaran)}`;
   budgetLimitEl.textContent = `Batas: ${formatMataUang(batasPengeluaran)}`;
@@ -439,7 +433,6 @@ function updateBudgetUI(totalPengeluaran) {
   }
 }
 
-// --- TABUNGAN & TARGET IMPAN ---
 function toggleSavingsForm() {
   document.getElementById('form-tabungan').classList.toggle('hidden');
 }
@@ -491,6 +484,7 @@ function hapusTabungan(idx) {
 
 function renderSavings() {
   const listEl = document.getElementById('savings-list');
+  if (!listEl) return;
   listEl.innerHTML = '';
 
   if (targetTabungan.length === 0) {
@@ -503,14 +497,14 @@ function renderSavings() {
     const div = document.createElement('div');
     div.className = 'saving-item';
     div.innerHTML = `
-      <div class="saving-header">
-        <span class="saving-title">🎯 ${item.nama}</span>
+      <div class="saving-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="saving-title" style="font-weight:600; font-size:0.85rem;">🎯 ${item.nama}</span>
         <div>
           <button onclick="nambahSaldoTabungan(${idx})" class="btn-text">+ Tabung</button>
           <button onclick="hapusTabungan(${idx})" class="btn-delete-item" style="margin-left:8px;">✕</button>
         </div>
       </div>
-      <div class="saving-amounts">
+      <div class="saving-amounts" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">
         <span>${formatMataUang(item.terkumpul)} dari ${formatMataUang(item.target)} (${persen}%)</span>
       </div>
       <div class="progress-bar-bg">
@@ -521,7 +515,6 @@ function renderSavings() {
   });
 }
 
-// --- FORM TRANSAKSI HANDLER ---
 function setFilter(type, btn) {
   activeFilter = type;
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
@@ -531,21 +524,32 @@ function setFilter(type, btn) {
 
 function filterTransactions() { updateUI(); }
 
-form.addEventListener('submit', (e) => {
-  e.preventDefault();
-  transaksi.unshift({
-    deskripsi: inputDeskripsi.value,
-    nominal: parseFloat(inputNominal.value),
-    tipe: selectTipe.value,
-    akun: selectAkun.value,
-    kategori: selectKategori.value,
-    tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
-    timestamp: Date.now()
-  });
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('form-transaksi');
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      transaksi.unshift({
+        deskripsi: document.getElementById('deskripsi').value,
+        nominal: parseFloat(document.getElementById('nominal').value),
+        tipe: document.getElementById('tipe').value,
+        akun: document.getElementById('sumber-akun').value,
+        kategori: document.getElementById('kategori').value,
+        tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+        timestamp: Date.now()
+      });
 
-  updateUI();
-  inputDeskripsi.value = '';
-  inputNominal.value = '';
+      updateUI();
+      document.getElementById('deskripsi').value = '';
+      document.getElementById('nominal').value = '';
+    });
+  }
+
+  const currencySelector = document.getElementById('currency-selector');
+  if (currencySelector) currencySelector.value = currentCurrency;
+
+  initLockscreen();
+  updateKategoriOptions();
 });
 
 function hapusTransaksi(index) {
@@ -565,17 +569,4 @@ function eksporKeCSV() {
   a.setAttribute('href', url);
   a.setAttribute('download', 'Laporan_Keuangan.csv');
   a.click();
-}
-
-// Jalankan pemeriksaan lockscreen awal saat dibuka
-initLockscreen();
-selectTipe.addEventListener('change', updateKategoriOptions);
-updateKategoriOptions();
-updateUI();
-
-// Service Worker Registration
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Error', err));
-  });
 }

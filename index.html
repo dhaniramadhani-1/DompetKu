@@ -2,256 +2,214 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dompetku - Pengelola Keuangan Modern</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Aplikasi Keuangan Modern</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- LAYER LOGIN LOCKSCREEN -->
-  <div id="login-screen" class="login-overlay">
+  <!-- LAYER LOCKSCREEN / LOGIN -->
+  <div id="login-screen" class="lockscreen-overlay">
     <div class="lockscreen-card">
-      <div class="brand-badge">💰 Dompetku</div>
-      <h2 id="login-title">Selamat Datang</h2>
-      <p id="login-subtitle">Masukkan PIN keamanan Anda</p>
-
-      <div id="pin-dots" class="pin-dots-container">
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
+      <div class="lockscreen-header">
+        <div class="app-icon">💳</div>
+        <h2 id="login-title">Selamat Datang</h2>
+        <p id="login-subtitle">Masukkan PIN 6 angka Anda</p>
       </div>
 
-      <div class="keypad-grid">
-        <button class="key-btn" onclick="pressKey('1')">1</button>
-        <button class="key-btn" onclick="pressKey('2')">2</button>
-        <button class="key-btn" onclick="pressKey('3')">3</button>
-        <button class="key-btn" onclick="pressKey('4')">4</button>
-        <button class="key-btn" onclick="pressKey('5')">5</button>
-        <button class="key-btn" onclick="pressKey('6')">6</button>
-        <button class="key-btn" onclick="pressKey('7')">7</button>
-        <button class="key-btn" onclick="pressKey('8')">8</button>
-        <button class="key-btn" onclick="pressKey('9')">9</button>
-        <button class="key-btn action" onclick="clearKey()"><small>Hapus</small></button>
-        <button class="key-btn" onclick="pressKey('0')">0</button>
-        <button class="key-btn action primary" onclick="submitPIN()">✓</button>
+      <!-- Keypad PIN -->
+      <div class="pin-display">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
       </div>
 
-      <div class="divider"><span>atau</span></div>
+      <div class="keypad">
+        <button onclick="pressKey('1')">1</button>
+        <button onclick="pressKey('2')">2</button>
+        <button onclick="pressKey('3')">3</button>
+        <button onclick="pressKey('4')">4</button>
+        <button onclick="pressKey('5')">5</button>
+        <button onclick="pressKey('6')">6</button>
+        <button onclick="pressKey('7')">7</button>
+        <button onclick="pressKey('8')">8</button>
+        <button onclick="pressKey('9')">9</button>
+        <button onclick="clearKey()">⌫</button>
+        <button onclick="pressKey('0')">0</button>
+        <button onclick="submitPIN()">✓</button>
+      </div>
 
-      <!-- Cukup pastikan bagian ini di index.html memiliki ID btn-google-login -->
-<button id="btn-google-login" onclick="loginGoogle()" class="btn-google">
-  <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width="18">
-  Buat Profil Baru
-</button>
+      <div class="login-divider"></div>
 
+      <button id="btn-google-login" onclick="loginGoogle()" class="btn-google">
+        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width="18">
+        Buat Profil Baru
+      </button>
+    </div>
+  </div>
 
-  <!-- HALAMAN UTAMA APLIKASI -->
+  <!-- UTAMA / DASHBOARD APLIKASI -->
   <div id="app-screen" class="app-container hidden">
+    
     <!-- Header -->
     <header class="app-header">
       <div class="user-profile">
-        <div class="avatar" id="user-avatar">💎</div>
+        <img src="diamond.jpg" alt="Profile" class="avatar-img">
         <div>
-          <span class="greeting">Halo, <strong id="user-name">Pengguna</strong></span>
-          <h1 class="brand-title">Dompetku Dashboard</h1>
+          <h3 id="user-name">Pengguna</h3>
+          <small>Akun Pribadi</small>
         </div>
       </div>
       <div class="header-actions">
-        <!-- PENGATURAN MATA UANG -->
-        <select id="currency-selector" onchange="changeCurrency(this.value)" class="currency-select" title="Pilih Mata Uang">
+        <select id="currency-selector" onchange="changeCurrency(this.value)" class="currency-select">
           <option value="IDR">IDR (Rp)</option>
           <option value="USD">USD ($)</option>
           <option value="EUR">EUR (€)</option>
           <option value="JPY">JPY (¥)</option>
           <option value="MYR">MYR (RM)</option>
-          <option value="SGD">SGD (S$)</option>
+          <option value="SGD">SGD ($)</option>
         </select>
-        <button onclick="toggleDarkMode()" class="btn-icon" title="Ubah Mode">🌙</button>
-        <button onclick="eksporKeCSV()" class="btn-icon" title="Ekspor Laporan">📊 <span>Laporan</span></button>
-        <button onclick="lockApp()" class="btn-icon danger" title="Kunci Aplikasi">🔒</button>
+        <button onclick="toggleDarkMode()" class="btn-icon" title="Mode Gelap/Terang">🌙</button>
+        <button onclick="lockApp()" class="btn-icon" title="Kunci Aplikasi">🔒</button>
       </div>
     </header>
 
-    <!-- Total Balance Highlight Card -->
-    <section class="main-balance-card">
-      <div class="balance-info">
-        <p class="balance-label">Total Saldo Bersih</p>
-        <h2 id="sisa-saldo" class="balance-amount">0</h2>
+    <!-- Ringkasan Saldo -->
+    <section class="summary-card">
+      <div class="balance-title">TOTAL SALDO</div>
+      <div id="sisa-saldo" class="balance-amount">Rp 0</div>
+
+      <div class="summary-details">
+        <div class="summary-box">
+          <span>Pemasukan</span>
+          <strong id="total-masuk">Rp 0</strong>
+        </div>
+        <div class="summary-box">
+          <span>Pengeluaran</span>
+          <strong id="total-keluar">Rp 0</strong>
+        </div>
       </div>
-      <div class="balance-badge">Aktif</div>
     </section>
 
-    <!-- FITUR PEMISAH KEUANGAN & TAMBAH AKUN CUSTOM -->
-    <section class="accounts-section">
-      <div class="box-header between">
-        <h3>💳 Sumber Dana / Akun</h3>
-        <button onclick="toggleAccountForm()" class="btn-text">+ Tambah Akun</button>
+    <!-- Manajemen Akun Keuangan -->
+    <section class="section-card">
+      <div class="section-header">
+        <h3>Sumber Akun</h3>
+        <button onclick="toggleAccountForm()" class="btn-text">+ Tambah</button>
       </div>
 
-      <!-- Form Tambah Akun Custom (Hidden default) -->
-      <form id="form-akun" class="form-grid hidden" onsubmit="tambahAkunCustom(event)">
-        <div class="input-field">
-          <label>Nama Akun / Bank / E-Wallet</label>
-          <input type="text" id="akun-nama" placeholder="Contoh: Blu BCA / LinkAja" required>
-        </div>
-        <div class="input-field">
-          <label>Ikon Emoji</label>
-          <select id="akun-icon">
-            <option value="💳">💳 Kartu/Bank</option>
-            <option value="🏦">🏦 Bank</option>
-            <option value="📱">📱 E-Wallet</option>
-            <option value="💵">💵 Cash</option>
-            <option value="💰">💰 Tabungan</option>
-            <option value="🌐">🌐 Online Pay</option>
-          </select>
-        </div>
-        <button type="submit" class="btn-primary-gradient">Simpan Akun Baru</button>
+      <form id="form-akun" class="account-form hidden" onsubmit="tambahAkunCustom(event)">
+        <input type="text" id="akun-nama" placeholder="Nama Akun (misal: Bank Jago)" required>
+        <select id="akun-icon">
+          <option value="💳">💳 Kartu/Bank</option>
+          <option value="📱">📱 E-Wallet</option>
+          <option value="🏦">🏦 Bank</option>
+          <option value="💵">💵 Tunai</option>
+          <option value="🐷">🐷 Tabungan</option>
+        </select>
+        <button type="submit" class="btn-primary">Simpan Akun</button>
       </form>
 
-      <div class="accounts-grid" id="accounts-list">
-        <!-- Generasi Otomatis dari JS -->
-      </div>
+      <div id="accounts-list" class="accounts-grid"></div>
     </section>
 
-    <!-- Ringkasan Keuangan Grid -->
-    <section class="summary-cards">
-      <div class="card-stat income">
-        <div class="stat-icon">⬇️</div>
-        <div class="stat-details">
-          <p>Pemasukan</p>
-          <h3 id="total-masuk">0</h3>
-        </div>
-      </div>
-      <div class="card-stat expense">
-        <div class="stat-icon">⬆️</div>
-        <div class="stat-details">
-          <p>Pengeluaran</p>
-          <h3 id="total-keluar">0</h3>
-        </div>
-      </div>
-    </section>
-
-    <!-- FITUR BARU: TARGET AMAL MINGGUAN -->
-    <section class="content-box charity-box">
-      <div class="box-header between">
-        <h3>🤲 Target Minimal Amal (Mingguan)</h3>
+    <!-- Target Amal Mingguan -->
+    <section class="section-card">
+      <div class="section-header">
+        <h3>🤲 Target Amal Mingguan</h3>
         <button onclick="setWeeklyCharityGoal()" class="btn-text">Atur Target</button>
       </div>
-      <div class="budget-progress-container">
-        <div class="budget-info">
-          <span id="charity-used-text">Terkumpul: 0</span>
-          <span id="charity-limit-text">Target: 0</span>
-        </div>
-        <div class="progress-bar-bg">
-          <div id="charity-progress-bar" class="progress-bar-fill charity-bar"></div>
-        </div>
-        <p id="charity-status" class="charity-status-text"></p>
+      <div class="budget-info">
+        <span id="charity-used-text">Terkumpul: Rp 0</span>
+        <span id="charity-limit-text">Target: Rp 0</span>
       </div>
+      <div class="progress-bar-bg">
+        <div id="charity-progress-bar" class="progress-bar-fill charity-fill" style="width: 0%;"></div>
+      </div>
+      <p id="charity-status" class="budget-warning-text"></p>
     </section>
 
-    <!-- FITUR BATAS MAKSIMAL PENGELUARAN BULANAN -->
-    <section class="content-box budget-box">
-      <div class="box-header between">
-        <h3>🎯 Batas Pengeluaran Bulanan</h3>
+    <!-- Batas Pengeluaran Bulanan -->
+    <section class="section-card">
+      <div class="section-header">
+        <h3>📊 Batas Pengeluaran</h3>
         <button onclick="setMonthlyBudget()" class="btn-text">Atur Batas</button>
       </div>
-      <div class="budget-progress-container">
-        <div class="budget-info">
-          <span id="budget-used-text">Terpakai: 0</span>
-          <span id="budget-limit-text">Batas: 0</span>
-        </div>
-        <div class="progress-bar-bg">
-          <div id="budget-progress-bar" class="progress-bar-fill"></div>
-        </div>
-        <p id="budget-warning" class="budget-warning-text"></p>
+      <div class="budget-info">
+        <span id="budget-used-text">Terpakai: Rp 0</span>
+        <span id="budget-limit-text">Batas: Rp 0</span>
       </div>
+      <div class="progress-bar-bg">
+        <div id="budget-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
+      </div>
+      <p id="budget-warning" class="budget-warning-text"></p>
     </section>
 
-    <!-- FITUR TABUNGAN UNTUK MEMBELI SESUATU -->
-    <section class="content-box">
-      <div class="box-header between">
-        <h3>🎯 Target Tabungan & Impian</h3>
-        <button onclick="toggleSavingsForm()" class="btn-text">+ Target Baru</button>
+    <!-- Target Impian & Tabungan -->
+    <section class="section-card">
+      <div class="section-header">
+        <h3>🎯 Target Impian</h3>
+        <button onclick="toggleSavingsForm()" class="btn-text">+ Tambah Target</button>
       </div>
 
-      <!-- Form Tambah Tabungan -->
-      <form id="form-tabungan" class="form-grid hidden" onsubmit="tambahTargetTabungan(event)">
-        <div class="input-field full">
-          <label>Nama Barang / Target Impian</label>
-          <input type="text" id="target-nama" placeholder="Contoh: Beli POCO M5 / Laptop" required>
-        </div>
-        <div class="input-field">
-          <label>Target Nominal</label>
-          <input type="number" id="target-nominal" placeholder="0" min="1" step="any" required>
-        </div>
-        <div class="input-field">
-          <label>Saldo Awal</label>
-          <input type="number" id="target-terkumpul" placeholder="0" min="0" step="any">
-        </div>
-        <button type="submit" class="btn-primary-gradient">Simpan Target</button>
+      <form id="form-tabungan" class="account-form hidden" onsubmit="tambahTargetTabungan(event)">
+        <input type="text" id="target-nama" placeholder="Nama Barang (misal: Laptop)" required>
+        <input type="number" id="target-nominal" placeholder="Harga Target" required>
+        <input type="number" id="target-terkumpul" placeholder="Modal Awal (Opsional)">
+        <button type="submit" class="btn-primary">Simpan Target</button>
       </form>
 
-      <div id="savings-list" class="savings-container">
-        <!-- Ditampilkan via JavaScript -->
-      </div>
+      <div id="savings-list" class="savings-container"></div>
     </section>
 
-    <!-- Form Tambah Transaksi -->
-    <section class="content-box">
-      <div class="box-header">
-        <h3>✨ Tambah Transaksi Baru</h3>
-      </div>
-      <form id="form-transaksi" class="form-grid">
-        <div class="input-field full">
-          <label>Deskripsi Transaksi</label>
-          <input type="text" id="deskripsi" placeholder="Contoh: Sedekah Subuh / Infaq Masjid" required>
-        </div>
-        <div class="input-field">
-          <label>Nominal</label>
-          <input type="number" id="nominal" placeholder="0" min="0.01" step="any" required>
-        </div>
-        <div class="input-field">
-          <label>Jenis</label>
-          <select id="tipe">
-            <option value="keluar">🔴 Pengeluaran</option>
-            <option value="masuk">🟢 Pemasukan</option>
+    <!-- Form Transaksi Baru -->
+    <section class="section-card">
+      <h3 style="margin-bottom: 8px;">Tambah Transaksi</h3>
+      <form id="form-transaksi" class="transaction-form">
+        <input type="text" id="deskripsi" placeholder="Keterangan (misal: Beli Kopi)" required>
+        <div class="form-row">
+          <input type="number" id="nominal" placeholder="Nominal" required>
+          <select id="tipe" onchange="updateKategoriOptions()">
+            <option value="keluar">Pengeluaran</option>
+            <option value="masuk">Pemasukan</option>
           </select>
         </div>
-        <div class="input-field">
-          <label>Sumber Akun</label>
+        <div class="form-row">
           <select id="sumber-akun"></select>
-        </div>
-        <div class="input-field">
-          <label>Kategori</label>
           <select id="kategori"></select>
         </div>
-        <button type="submit" class="btn-primary-gradient">Simpan Catatan</button>
+        <button type="submit" class="btn-primary btn-block">Catat Transaksi</button>
       </form>
     </section>
 
     <!-- Riwayat Transaksi -->
-    <section class="content-box">
-      <div class="box-header between">
-        <h3>📜 Riwayat Transaksi</h3>
-        <span id="transaction-count" class="badge-count">0 Transaksi</span>
+    <section class="section-card">
+      <div class="section-header">
+        <h3>Riwayat Transaksi</h3>
+        <span id="transaction-count" class="badge">0 Transaksi</span>
       </div>
 
-      <div class="filter-bar">
-        <input type="text" id="search-input" onkeyup="filterTransactions()" placeholder="🔍 Cari transaksi...">
-        <div class="filter-chips">
+      <div class="filter-controls">
+        <input type="text" id="search-input" placeholder="🔍 Cari transaksi..." onkeyup="filterTransactions()">
+        <div class="chip-group">
           <button class="chip active" onclick="setFilter('all', this)">Semua</button>
           <button class="chip" onclick="setFilter('masuk', this)">Masuk</button>
           <button class="chip" onclick="setFilter('keluar', this)">Keluar</button>
         </div>
       </div>
 
-      <ul id="daftar-transaksi" class="modern-history-list"></ul>
+      <ul id="daftar-transaksi" class="history-list"></ul>
+
+      <button onclick="eksporKeCSV()" class="btn-secondary btn-block" style="margin-top: 16px;">
+        📥 Ekspor Data ke CSV
+      </button>
     </section>
+
   </div>
 
   <script src="app.js"></script>
